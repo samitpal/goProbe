@@ -1,0 +1,11 @@
+{{define "configPage"}}
+  {{template "header"}} 
+
+  {{template "common"}}
+
+  {{range .}}
+  	<p> {{.RetConfig}} </p>
+  {{end}}
+
+  {{template "footer"}}
+{{end}}

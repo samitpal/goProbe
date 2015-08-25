@@ -1,0 +1,186 @@
+package main
+
+import (
+	"errors"
+	"flag"
+	"fmt"
+	"github.com/golang/glog"
+	"github.com/samitpal/goProbe/metric_export"
+	"github.com/samitpal/goProbe/modules"
+	"html/template"
+	"io/ioutil"
+	"math/rand"
+	"net/http"
+	_ "net/http/pprof"
+	"os"
+	"path"
+	"time"
+)
+
+var (
+	listenAddress     = flag.String("listen-address", ":8080", "Address to listen on for web interface.")
+	configFlag        = flag.String("config", "./probe_config.json", "Path to the probe json config")
+	probeSpaceOutTime = flag.Int("probe_space_out_time", 15, "Initial sleep time to allow spacing out of the probes")
+	expositionType    = flag.String("exposition_type", "json", "Metric exposition format.")
+
+	templates = template.Must(template.ParseGlob(path.Join(os.Getenv("GOPATH"), "src/github.com/samitpal/goProbe/templates/*")))
+)
+
+func setupMetricExporter(s string) (metric_export.MetricExporter, error) {
+	var mExp metric_export.MetricExporter
+	if s == "prometheus" {
+		mExp = metric_export.NewPrometheusExport()
+	} else if s == "json" {
+		mExp = metric_export.NewJSONExport()
+	} else {
+		return nil, errors.New("Unknown metric exporter, %s.")
+	}
+	mExp.Prepare()
+	return mExp, nil
+}
+
+// runProbes actually runs the probes. This is the core.
+func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter) {
+	for _, p := range probes {
+		// Add some randomness to space out the probes a bit at start up.
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		time.Sleep(time.Duration(r.Intn(*probeSpaceOutTime)) * time.Second)
+		go func(p modules.Prober) {
+			for {
+				// Buffered channel so that the read happens even if there is nothing to receive it. Needed to
+				// handle the timeout scenario.
+				respCh := make(chan *modules.ProbeData, 1)
+				errCh := make(chan error, 1)
+
+				pn := *p.Name()
+				to := *p.TimeoutSecs()
+				timer := time.NewTimer(time.Duration(*p.RunIntervalSecs()) * time.Second)
+
+				glog.Infof("Launching new probe:%s", pn)
+				go p.Run(respCh, errCh)
+				mExp.IncProbeCount(pn)
+
+				select {
+				case msg := <-respCh:
+					err := checkProbeData(msg)
+					if err != nil {
+						glog.Errorf("Error: %v", err)
+						mExp.IncProbeErrorCount(pn)
+						mExp.SetFieldValuesUnexpected(pn)
+					} else {
+						mExp.SetFieldValues(pn, msg)
+					}
+				case err_msg := <-errCh:
+					glog.Errorf("Probe %s error'ed out: %v", pn, err_msg)
+					mExp.IncProbeErrorCount(pn)
+					mExp.SetFieldValuesUnexpected(pn)
+				case <-time.After(time.Duration(to) * time.Second):
+					glog.Errorf("Timed out probe:%v ", pn)
+					mExp.IncProbeTimeoutCount(pn)
+					mExp.SetFieldValuesUnexpected(pn)
+				}
+				<-timer.C
+			}
+		}(p)
+	}
+}
+
+// checkProbeConfig function does sanity checks on the probe definition.
+func checkProbeConfig(probes []modules.Prober) error {
+	if len(probes) == 0 {
+		return errors.New("No probe modules defined")
+	}
+	for _, p := range probes {
+		if *p.TimeoutSecs() > *p.RunIntervalSecs() {
+			return fmt.Errorf("Timeout can not be more than the Interval %v", p.Name())
+		}
+	}
+	return nil
+}
+
+// checkProbedata function verifies the correctness of the probe response.
+func checkProbeData(pd *modules.ProbeData) error {
+	if pd.IsUp == nil {
+		return errors.New("Mandatory field 'IsUp' is missing in probe response")
+	}
+	if pd.Latency == nil {
+		return errors.New("Mandatory field 'Latency' is missing in probe response")
+	}
+	if pd.StartTime == nil {
+		return errors.New("Mandatory field 'StartTime' is missing in probe response")
+	}
+	if pd.EndTime == nil {
+		return errors.New("Mandatory field 'EndTime' is missing in probe response")
+	}
+	return nil
+}
+
+func handleHomePage(w http.ResponseWriter, r *http.Request) {
+	err := templates.ExecuteTemplate(w, "indexPage", nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// TODO: Return pure json instead of html.
+func handleConfig(w http.ResponseWriter, r *http.Request) {
+	config, err := ioutil.ReadFile(*configFlag)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	probes, err := SetupConfig(config)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = templates.ExecuteTemplate(w, "configPage", probes)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func handleStatus(w http.ResponseWriter, r *http.Request) {
+	err := templates.ExecuteTemplate(w, "statusPage", nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func main() {
+
+	flag.Parse()
+
+	config, err := ioutil.ReadFile(*configFlag)
+	if err != nil {
+		glog.Exitf("Error reading config file: %v", err)
+	}
+	probes, err := SetupConfig(config)
+	if err != nil {
+		glog.Exitf("Error in setup, exiting: %v", err)
+	}
+	err = checkProbeConfig(probes)
+	if err != nil {
+		glog.Exitf("Error in probe config, exiting: %v", err)
+	}
+
+	mExp, err := setupMetricExporter(*expositionType)
+	if err != nil {
+		glog.Exitf("Error : %v", err)
+	}
+
+	http.HandleFunc("/", handleHomePage)
+	http.HandleFunc("/status", handleStatus)
+	http.HandleFunc("/config", handleConfig)
+
+	mExp.RegisterHttpHandler()
+	go http.ListenAndServe(*listenAddress, nil)
+
+	// Start probing.
+	runProbes(probes, mExp)
+
+	select {} // Block here forever.
+}

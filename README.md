@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/samitpal/goProbe.svg?branch=master)](https://travis-ci.org/samipal/goProbe)[![go-doc](https://godoc.org/github.com/samitpal/goProbe?status.svg)](https://godoc.org/github.com/samitpal/goProbe)
+
 Summary
 ------------------
 goProbe is a probe service written in Go programming language. It has three parts to it, a core, probe modules and a metric exposition component It currently supports exposing probe metrics in json (default) as well as [prometheus](http://prometheus.io) compatible format. Since metric exposition is decoupled from the core, it could support other open source monitoring systems in the future. Pobes are modules and goProbe can potentially be confgured with arbitrary number of modules. Currently the only module configured is the http module.

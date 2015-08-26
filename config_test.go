@@ -47,7 +47,7 @@ func TestSetupConfig(t *testing.T) {
 	b1 := []byte(
 		`{
  "probe_name": "probe1",
- "probe_url": "http://abc.com",
+ "probe_url": "http://example.com",
  "probe_http_method": "GET",
  "probe_action": "check_ret_200",
  "probe_match_string": null,
@@ -57,7 +57,7 @@ func TestSetupConfig(t *testing.T) {
 	b2 := []byte(
 		`{
  "probe_name": "probe2",
- "probe_url": "https://abc.com",
+ "probe_url": "https://example.com",
  "probe_http_method": "GET",
  "probe_action": "check_match_payload",
  "probe_match_string": "match_me",

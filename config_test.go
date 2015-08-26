@@ -42,7 +42,6 @@ func TestSetupConfig(t *testing.T) {
 		t.Error("Element lentgth should be two")
 	}
 
-	//Tests for the http probe module.
 	//Test 1
 	b1 := []byte(
 		`{

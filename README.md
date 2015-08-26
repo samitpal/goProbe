@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/samitpal/goProbe.svg?branch=master)](https://travis-ci.org/samipal/goProbe)[![go-doc](https://godoc.org/github.com/samitpal/goProbe?status.svg)](https://godoc.org/github.com/samitpal/goProbe)
+[![Build Status](https://travis-ci.org/samitpal/goProbe.svg?branch=master)](https://travis-ci.org/samipal/goProbe)[![google group](https://groups.google.com/forum/#!forum/goprobe)](https://groups.google.com/forum/#!forum/goprobe)
 
 Summary
 ------------------
@@ -41,7 +41,7 @@ Running the binary
 -------------------
 $ GOPATH/bin/goProbe -config <*path to config file*>
 
-By default goProbe displays the probe metrics via the /metrics http handler in json format. It also displays the current configs via its /config http handler. The /status handler is yet to be implemented.
+By default goProbe displays the probe metrics via the **/metrics** http handler in json format. It also displays the current configs via its **/config** http handler. The /status handler is yet to be implemented.
 
 To expose the metrics in prometheus format, run it as follows,
 

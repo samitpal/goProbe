@@ -19,9 +19,10 @@ import (
 
 var (
 	listenAddress     = flag.String("listen-address", ":8080", "Address to listen on for web interface.")
-	configFlag        = flag.String("config", "./probe_config.json", "Path to the probe json config")
-	probeSpaceOutTime = flag.Int("probe_space_out_time", 15, "Initial sleep time to allow spacing out of the probes")
+	configFlag        = flag.String("config", "./probe_config.json", "Path to the probe json config.")
+	probeSpaceOutTime = flag.Int("probe_space_out_time", 15, "Max sleep time between probes to allow spacing out of the probes at startup.")
 	expositionType    = flag.String("exposition_type", "json", "Metric exposition format.")
+	dryRun            = flag.Bool("dry_run", false, "Dry run mode where it does everything except running the probes.")
 
 	templates = template.Must(template.ParseGlob(path.Join(os.Getenv("GOPATH"), "src/github.com/samitpal/goProbe/templates/*")))
 )
@@ -35,6 +36,7 @@ func setupMetricExporter(s string) (metric_export.MetricExporter, error) {
 	} else {
 		return nil, errors.New("Unknown metric exporter, %s.")
 	}
+	glog.Infof("Exposing metrics in %s format", s)
 	mExp.Prepare()
 	return mExp, nil
 }
@@ -180,7 +182,8 @@ func main() {
 	go http.ListenAndServe(*listenAddress, nil)
 
 	// Start probing.
-	runProbes(probes, mExp)
-
-	select {} // Block here forever.
+	if !*dryRun {
+		runProbes(probes, mExp)
+		select {} // Block here forever.
+	}
 }

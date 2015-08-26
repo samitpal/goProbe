@@ -35,6 +35,14 @@ func (p httpProbe) checkConfig() error {
 	if p.ProbeAction != nil && p.ProbeMatchString == nil {
 		return errors.New("ProbeMatchString is required")
 	}
+	if p.ProbeHttpMethod != nil {
+		if *p.ProbeHttpMethod == "GET" || *p.ProbeHttpMethod == "HEAD" {
+			// we are good.
+		} else {
+			return errors.New("Probe method can only be either of 'GET' or 'HEAD'")
+
+		}
+	}
 	return nil
 }
 

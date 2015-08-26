@@ -3,13 +3,14 @@ package main
 import "testing"
 
 func TestSetupConfig(t *testing.T) {
+	// config with 2 valid and one invalid probes.
 	config := []byte(`
 		[
     	{
         "probe_type": "http",
         "probe_config": {
             "probe_name": "probe1",
-            "probe_url": "http://abc.com",
+            "probe_url": "http://example.com",
             "probe_timeout": 20,
             "probe_interval": 30
 
@@ -19,9 +20,17 @@ func TestSetupConfig(t *testing.T) {
         "probe_type": "http",
         "probe_config": {
             "probe_name": "probe2",
-            "probe_url": "https://abc.com",
+            "probe_url": "https://example.com",
             "probe_action": "check_match_payload",
             "probe_match_string": "match_me"
+        }
+    	},
+    	{
+        "probe_type": "http",
+        "probe_config": {
+            "probe_name": "probe3",
+            "probe_url": "https://example.com",
+  			"probe_http_method": "INVALID"
         }
     	}
 		]`)

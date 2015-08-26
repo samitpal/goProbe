@@ -3,7 +3,6 @@ package metric_export
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/samitpal/goProbe/modules"
 	"net/http"
 	"sync"
@@ -135,7 +134,6 @@ func (pm *jsonExport) RegisterHttpHandler() {
 
 func (pm *jsonExport) MarshalJSON() ([]byte, error) {
 	m := make(map[string]interface{})
-	fmt.Println("Inside marshaljson")
 
 	pm.ProbeCount.RLock()
 	m["probe_count"] = pm.ProbeCount.Count

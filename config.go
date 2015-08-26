@@ -45,7 +45,7 @@ func SetupConfig(config []byte) ([]modules.Prober, error) {
 			if err == nil {
 				probes = append(probes, t)
 			} else {
-				glog.Errorf("Error in config: ", err)
+				glog.Errorf("Error in config: %v", err)
 			}
 		}
 		// Add a new 'else if' statement here for a new probe type.

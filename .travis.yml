@@ -1,11 +1,9 @@
-sudo: required
+sudo: false
 language: go
 
 go:
  - 1.4
 
-before_install:
- - sudo apt-get install -y mercurial
 script:
  - go vet ./...
  - go test

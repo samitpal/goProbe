@@ -12,8 +12,9 @@ type TestProbe struct {
 	ProbeMyConfig *string `json:"probe_my_config"` // this config field is specific to this module.
 }
 
-func (t *TestProbe) Prepare() {
+func (t *TestProbe) Prepare() error {
 	fmt.Println("Do nothing")
+	return nil
 }
 
 func (t *TestProbe) Name() *string {

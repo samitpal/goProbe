@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/golang/glog"
 	"github.com/samitpal/goProbe/modules"
 )
 
@@ -40,8 +41,12 @@ func SetupConfig(config []byte) ([]modules.Prober, error) {
 				return nil, err
 			}
 			// Call the module's Prepare method which should do its own initialization (if any).
-			t.Prepare()
-			probes = append(probes, t)
+			err = t.Prepare()
+			if err == nil {
+				probes = append(probes, t)
+			} else {
+				glog.Errorf("Error in config: ", err)
+			}
 		}
 		// Add a new 'else if' statement here for a new probe type.
 	}

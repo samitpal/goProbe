@@ -19,7 +19,7 @@ type ProbeData struct {
 type Prober interface {
 	// Prepare is used to set up the probe module. Use it to do custom initialization.
 	// Prepare is guranteed to be called before executing the Run() method of the module.
-	Prepare()
+	Prepare() error
 
 	// Run runs the probe. It will be called in a loop. This is the most import method of the interface.
 	// Implementation should send the probe response data using the ProbeData struct.

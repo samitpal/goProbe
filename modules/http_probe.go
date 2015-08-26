@@ -2,6 +2,7 @@ package modules
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
@@ -23,17 +24,18 @@ func NewHttpProbe() *httpProbe {
 	return new(httpProbe)
 }
 
-func (p httpProbe) checkConfig() {
+func (p httpProbe) checkConfig() error {
 	if p.ProbeName == nil {
-		glog.Exit("Required field ProbeName is not set")
+		return errors.New("Required field ProbeName is not set")
 	}
 	if p.ProbeURL == nil {
-		glog.Exit("Required field ProbeURL is not set")
+		return errors.New("Required field ProbeURL is not set")
 	}
 
 	if p.ProbeAction != nil && p.ProbeMatchString == nil {
-		glog.Exit("ProbeMatchString is required")
+		return errors.New("ProbeMatchString is required")
 	}
+	return nil
 }
 
 func (p *httpProbe) setDefaults() {
@@ -58,9 +60,13 @@ func (p *httpProbe) setDefaults() {
 
 // httpProbe implements the Prober interface.
 
-func (p *httpProbe) Prepare() {
-	p.checkConfig()
+func (p *httpProbe) Prepare() error {
+	err := p.checkConfig()
+	if err != nil {
+		return err
+	}
 	p.setDefaults()
+	return nil
 }
 
 func (p httpProbe) Run(respCh chan<- *ProbeData, errCh chan<- error) {

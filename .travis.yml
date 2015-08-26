@@ -7,4 +7,5 @@ go:
 before_install:
  - sudo apt-get install -y mercurial
 script:
- - go test ./..
+ - go vet ./...
+ - go test

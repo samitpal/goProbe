@@ -19,7 +19,6 @@ type prometheusExport struct {
 var (
 	labels                   = []string{"probe_name"}
 	prometheusProbeNameSpace = flag.String("prometheus_probe_name_space", "probe", "Prometheus name space of the probes. Valid with prometheus exposition type")
-	prometheusMetricsPath    = flag.String("prometheus_metrics_path", "/metrics", "Metric exposition path.")
 )
 
 func NewPrometheusExport() *prometheusExport {
@@ -105,7 +104,7 @@ func (p *prometheusExport) SetFieldValuesUnexpected(probeName string) {
 	p.ProbePayloadSize.WithLabelValues(probeName).Set(-1)
 }
 
-//RegisterHttpHandler registers a http handler to expose the metrics
-func (p prometheusExport) RegisterHttpHandler() {
-	http.Handle(*prometheusMetricsPath, prometheus.Handler())
+//MetricHttpHandler registers a http handler to expose the metrics
+func (p prometheusExport) MetricHttpHandler() http.Handler {
+	return prometheus.Handler()
 }

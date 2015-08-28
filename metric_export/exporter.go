@@ -1,6 +1,9 @@
 package metric_export
 
-import "github.com/samitpal/goProbe/modules"
+import (
+	"github.com/samitpal/goProbe/modules"
+	"net/http"
+)
 
 // MetricExporter interface is implemented by an exporter which wants to expose the probe metrics in its own format.
 type MetricExporter interface {
@@ -23,6 +26,6 @@ type MetricExporter interface {
 	// one might want to set the ‘up’ variable for a probe which timed out to -1 instead of a 0 or 1.
 	SetFieldValuesUnexpected(string)
 
-	//RegisterHttpHandler registers an http handler to expose the metrics.
-	RegisterHttpHandler()
+	//MetricHttpHandler returns the http handler to expose the metrics via a given path (e.g /metrics).
+	MetricHttpHandler() http.Handler
 }

@@ -2,14 +2,9 @@ package metric_export
 
 import (
 	"encoding/json"
-	"flag"
 	"github.com/samitpal/goProbe/modules"
 	"net/http"
 	"sync"
-)
-
-var (
-	jsonMetricsPath = flag.String("json_metrics_path", "/metrics", "Metric exposition path.")
 )
 
 type ProbeCount struct {
@@ -127,8 +122,8 @@ func jsonHttpHandler(pm *jsonExport) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func (pm *jsonExport) RegisterHttpHandler() {
-	http.Handle(*jsonMetricsPath, jsonHttpHandler(pm))
+func (pm *jsonExport) MetricHttpHandler() http.Handler {
+	return jsonHttpHandler(pm)
 
 }
 

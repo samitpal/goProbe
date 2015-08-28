@@ -24,7 +24,7 @@ type Probes struct {
 	ProbeConfig json.RawMessage `json:"probe_config"` // Here we branch to the respective probe type config.
 }
 
-func SetupConfig(config []byte) ([]modules.Prober, error) {
+func setupConfig(config []byte) ([]modules.Prober, error) {
 	var p []Probes
 	err := json.Unmarshal(config, &p)
 	if err != nil {

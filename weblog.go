@@ -30,7 +30,7 @@ func init() {
 }
 
 func createLogDir(name string) error {
-	err := os.MkdirAll(name, 0664)
+	err := os.MkdirAll(name, 0775)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func logName(l string, t time.Time) (name, link string) {
 		t.Minute(),
 		t.Second(),
 		pid)
-	return name, l
+	return name, program + "." + l
 }
 
 func setupWebLog(dirPath string, t time.Time) (fi *os.File, err error) {

@@ -35,7 +35,7 @@ func TestSetupConfig(t *testing.T) {
     	}
 		]`)
 
-	got, _ := SetupConfig(config)
+	got, _ := setupConfig(config)
 
 	// Test that there are two elements.
 	if len(got) != 2 {

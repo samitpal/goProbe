@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/golang/glog"
+	"github.com/gorilla/handlers"
 	"github.com/samitpal/goProbe/metric_export"
 	"github.com/samitpal/goProbe/modules"
 	"html/template"
@@ -23,8 +24,9 @@ var (
 	probeSpaceOutTime = flag.Int("probe_space_out_time", 15, "Max sleep time between probes to allow spacing out of the probes at startup.")
 	expositionType    = flag.String("exposition_type", "json", "Metric exposition format.")
 	dryRun            = flag.Bool("dry_run", false, "Dry run mode where it does everything except running the probes.")
-
-	templates = template.Must(template.ParseGlob(path.Join(os.Getenv("GOPATH"), "src/github.com/samitpal/goProbe/templates/*")))
+	metricsPath       = flag.String("metric_path", "/metrics", "Metric exposition path.")
+	webLogDir         = flag.String("weblog_dir", "", "Directory path of the web log.")
+	templates         = template.Must(template.ParseGlob(path.Join(os.Getenv("GOPATH"), "src/github.com/samitpal/goProbe/templates/*")))
 )
 
 func setupMetricExporter(s string) (metric_export.MetricExporter, error) {
@@ -36,7 +38,6 @@ func setupMetricExporter(s string) (metric_export.MetricExporter, error) {
 	} else {
 		return nil, errors.New("Unknown metric exporter, %s.")
 	}
-	glog.Infof("Exposing metrics in %s format", s)
 	mExp.Prepare()
 	return mExp, nil
 }
@@ -131,7 +132,7 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	probes, err := SetupConfig(config)
+	probes, err := setupConfig(config)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -155,12 +156,11 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 func main() {
 
 	flag.Parse()
-
 	config, err := ioutil.ReadFile(*configFlag)
 	if err != nil {
 		glog.Exitf("Error reading config file: %v", err)
 	}
-	probes, err := SetupConfig(config)
+	probes, err := setupConfig(config)
 	if err != nil {
 		glog.Exitf("Error in setup, exiting: %v", err)
 	}
@@ -174,15 +174,26 @@ func main() {
 		glog.Exitf("Error : %v", err)
 	}
 
-	http.HandleFunc("/", handleHomePage)
-	http.HandleFunc("/status", handleStatus)
-	http.HandleFunc("/config", handleConfig)
+	var fh *os.File
+	if *webLogDir != "" {
+		fh, err = setupWebLog(*webLogDir, time.Now())
+		if err != nil {
+			glog.Exitf("Failed to set up logging", err)
+		}
+	} else {
+		fh = os.Stdout // logs web accesses to stdout. May not be thread safe.
+	}
 
-	mExp.RegisterHttpHandler()
+	http.Handle("/", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(handleHomePage)))
+	http.Handle("/status", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(handleStatus)))
+	http.Handle("/config", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(handleConfig)))
+	http.Handle(*metricsPath, handlers.CombinedLoggingHandler(fh, mExp.MetricHttpHandler()))
+
+	glog.Infof("Starting goProbe server. Exposing metrics in %s format via %s http path.", *expositionType, *metricsPath)
 	go http.ListenAndServe(*listenAddress, nil)
 
-	// Start probing.
 	if !*dryRun {
+		// Start probing.
 		runProbes(probes, mExp)
 		select {} // Block here forever.
 	}

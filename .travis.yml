@@ -1,6 +1,8 @@
 sudo: false
 language: go
 
+before_script:
+ - export GOPROBE_TMPL="templates/*"
 go:
  - 1.4
 

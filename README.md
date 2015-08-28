@@ -1,8 +1,14 @@
-[![Build Status](https://travis-ci.org/samitpal/goProbe.svg?branch=master)](https://travis-ci.org/samipal/goProbe)[![google group](https://groups.google.com/forum/#!forum/goprobe)](https://groups.google.com/forum/#!forum/goprobe)
+[![Build Status](https://travis-ci.org/samitpal/goProbe.svg?branch=master)](https://travis-ci.org/samipal/goProbe)
+
+[google group](https://groups.google.com/forum/#!forum/goprobe)
 
 Summary
 ------------------
-goProbe is a probe service written in Go programming language. It has three parts to it, a core, probe modules and a metric exposition component It currently supports exposing probe metrics in json (default) as well as [prometheus](http://prometheus.io) compatible format. Since metric exposition is decoupled from the core, it could support other open source monitoring systems in the future. Pobes are modules and goProbe can potentially be confgured with arbitrary number of modules. Currently the only module configured is the http module.
+goProbe is a probe service written in Go programming language. It has three parts to it, a core, probe modules and a metric exposition component. 
+
+It currently supports probe metric exposition in json (default) as well as [prometheus](http://prometheus.io) compatible format. 
+
+Pobes are modules and goProbe can potentially be confgured with arbitrary number of modules. Currently the only module configured is the http module.
 
 goProbe takes a json file as a config input which typically supplies the probe name (each should be unique), run intervals, timeouts etc. Each module can have its own json config fields. Below is an example config snippet of the built-in http probe module. It configures two probes probe1 and probe 2 of type http.
 
@@ -29,6 +35,7 @@ goProbe takes a json file as a config input which typically supplies the probe n
 Installation
 -------------------
 Install mercuruial. On ubuntu,
+
 $ sudo apt-get install mercurial
 
 $ go get -u github.com/samitpal/goProbe
@@ -39,13 +46,18 @@ $ go install
 
 Running the binary
 -------------------
-$ GOPATH/bin/goProbe -config <*path to config file*>
+
+First set the environmental variable which points to the html templates, e.g
+
+$ export GOPROBE_TMPL="templates/*" 
+
+$ $GOPATH/bin/goProbe -config <*path to config file*>
 
 By default goProbe displays the probe metrics via the **/metrics** http handler in json format. It also displays the current configs via its **/config** http handler. The /status handler is yet to be implemented.
 
 To expose the metrics in prometheus format, run it as follows,
 
-$ GOPATH/bin/goProbe -config <*path to config file*> -exposition_type prometheus
+$ $GOPATH/bin/goProbe -config <*path to config file*> -exposition_type prometheus
 
 Http probe json configs
 -------------------

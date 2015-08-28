@@ -14,7 +14,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"path"
 	"time"
 )
 
@@ -26,7 +25,7 @@ var (
 	dryRun            = flag.Bool("dry_run", false, "Dry run mode where it does everything except running the probes.")
 	metricsPath       = flag.String("metric_path", "/metrics", "Metric exposition path.")
 	webLogDir         = flag.String("weblog_dir", "", "Directory path of the web log.")
-	templates         = template.Must(template.ParseGlob(path.Join(os.Getenv("GOPATH"), "src/github.com/samitpal/goProbe/templates/*")))
+	templates         = template.Must(template.ParseGlob(os.Getenv("GOPROBE_TMPL")))
 )
 
 func setupMetricExporter(s string) (metric_export.MetricExporter, error) {

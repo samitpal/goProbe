@@ -1,4 +1,4 @@
-// This orovides a glog style logging for web logs. In fact parts of teh code is copied from glog source.
+// This provides a glog style logging for web logs. In fact parts of thh code is copied from glog source.
 package main
 
 import (

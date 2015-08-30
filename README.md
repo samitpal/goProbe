@@ -34,6 +34,10 @@ goProbe takes a json file as a config input which typically supplies the probe n
 
 Installation
 -------------------
+Precompiled binaries are available from the releases link.
+
+To build from source follow the steps below: 
+
 Install mercuruial. On ubuntu,
 
 $ sudo apt-get install mercurial

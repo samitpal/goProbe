@@ -188,12 +188,15 @@ func main() {
 	http.Handle("/config", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(handleConfig)))
 	http.Handle(*metricsPath, handlers.CombinedLoggingHandler(fh, mExp.MetricHttpHandler()))
 
-	glog.Infof("Starting goProbe server. Exposing metrics in %s format via %s http path.", *expositionType, *metricsPath)
-	go http.ListenAndServe(*listenAddress, nil)
+	glog.Info("Starting goProbe server.")
+	glog.Infof("Will expose metrics in %s format via %s http path.", *expositionType, *metricsPath)
 
 	if !*dryRun {
 		// Start probing.
-		runProbes(probes, mExp)
-		select {} // Block here forever.
+		go runProbes(probes, mExp)
 	}
+	if err = http.ListenAndServe(*listenAddress, nil); err != nil {
+		panic(err)
+	}
+
 }

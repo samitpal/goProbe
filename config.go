@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/golang/glog"
 	"github.com/samitpal/goProbe/modules"
+	"github.com/samitpal/goProbe/modules/http"
 )
 
 /* Example json config
@@ -35,7 +36,7 @@ func setupConfig(config []byte) ([]modules.Prober, error) {
 	// TODO: It is a bit ugly here. A new probe module will need its own 'if/else if' block. Make it better.
 	for _, c := range p {
 		if c.ProbeType == "http" {
-			t := modules.NewHttpProbe()
+			t := http.NewHttpProbe()
 			err := json.Unmarshal(c.ProbeConfig, t)
 			if err != nil {
 				return nil, err

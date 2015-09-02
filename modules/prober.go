@@ -22,7 +22,7 @@ type Prober interface {
 	Prepare() error
 
 	// Run runs the probe. It will be called in a loop. This is the most import method of the interface.
-	// Implementation should send the probe response data using the ProbeData struct.
+	// Implementation should send the probe response data through the ProbeData channel.
 	// In case of any error, the same should be send via the error channel. The response channel
 	// should not be used in error situations.
 	Run(chan<- *ProbeData, chan<- error)

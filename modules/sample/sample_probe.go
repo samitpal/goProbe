@@ -1,7 +1,8 @@
-package modules
+package sample
 
 import (
 	"encoding/json"
+	"github.com/samitpal/goProbe/modules"
 	"fmt"
 )
 
@@ -20,13 +21,13 @@ func (t *TestProbe) Prepare() error {
 func (t *TestProbe) Name() *string {
 	return t.ProbeName
 }
-func (t *TestProbe) Run(respCh chan<- *ProbeData, errCh chan<- error) {
+func (t *TestProbe) Run(respCh chan<- *modules.ProbeData, errCh chan<- error) {
 	isUp := float64(0)
 	latency := float64(40)
 	startTime := int64(357683)
 	endTime := int64(457683)
 
-	respCh <- &ProbeData{
+	respCh <- &modules.ProbeData{
 		IsUp:      &isUp,
 		Latency:   &latency,
 		StartTime: &startTime,

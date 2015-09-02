@@ -1,9 +1,10 @@
-package modules
+package http
 
 import (
 	"encoding/json"
 	"errors"
 	"github.com/golang/glog"
+	"github.com/samitpal/goProbe/modules"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -11,13 +12,19 @@ import (
 )
 
 type httpProbe struct {
-	ProbeName        *string `json:"probe_name"`
-	ProbeURL         *string `json:"probe_url"`
-	ProbeHttpMethod  *string `json:"probe_http_method"`
-	ProbeAction      *string `json:"probe_action"`
-	ProbeMatchString *string `json:"probe_match_string"` // a regulat expression.
-	ProbeInterval    *int    `json:"probe_interval"`
-	ProbeTimeout     *int    `json:"probe_timeout"`
+	ProbeName        *string       `json:"probe_name"`
+	ProbeURL         *string       `json:"probe_url"`
+	ProbeHttpMethod  *string       `json:"probe_http_method"`
+	ProbeAction      *string       `json:"probe_action"`
+	ProbeMatchString *string       `json:"probe_match_string"` // a regulat expression.
+	ProbeHttpHeaders *probeHeaders `json:"probe_http_headers"` // request headers.
+	ProbeInterval    *int          `json:"probe_interval"`
+	ProbeTimeout     *int          `json:"probe_timeout"`
+}
+
+type probeHeaders struct {
+	Host      *string `json:"host"`
+	UserAgent *string `json:"user_agent"`
 }
 
 func NewHttpProbe() *httpProbe {
@@ -63,7 +70,15 @@ func (p *httpProbe) setDefaults() {
 		i := 60
 		p.ProbeInterval = &i
 	}
+}
 
+func setCustomHeaders(ph *probeHeaders, r *http.Request) {
+	if ph.Host != nil {
+		r.Header.Add("Host", *ph.Host)
+	}
+	if ph.UserAgent != nil {
+		r.Header.Add("User-Agent", *ph.UserAgent)
+	}
 }
 
 // httpProbe implements the Prober interface.
@@ -77,7 +92,7 @@ func (p *httpProbe) Prepare() error {
 	return nil
 }
 
-func (p httpProbe) Run(respCh chan<- *ProbeData, errCh chan<- error) {
+func (p httpProbe) Run(respCh chan<- *modules.ProbeData, errCh chan<- error) {
 	// Run the http probe
 	startTime := time.Now().UnixNano()
 	client := &http.Client{Timeout: time.Duration(*p.ProbeTimeout) * time.Second}
@@ -88,7 +103,10 @@ func (p httpProbe) Run(respCh chan<- *ProbeData, errCh chan<- error) {
 		errCh <- err
 		return
 	}
-
+	// set custom headers if any.
+	if p.ProbeHttpHeaders != nil {
+		setCustomHeaders(p.ProbeHttpHeaders, req)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		glog.Errorf("Error: %v", err)
@@ -126,7 +144,7 @@ func (p httpProbe) Run(respCh chan<- *ProbeData, errCh chan<- error) {
 	endTime := time.Now().UnixNano()
 	latency := (float64(endTime - startTime)) / 1000000
 
-	respCh <- &ProbeData{
+	respCh <- &modules.ProbeData{
 		IsUp:        &isUp,
 		PayloadSize: &respPayloadSize,
 		Latency:     &latency,

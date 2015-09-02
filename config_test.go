@@ -22,7 +22,12 @@ func TestSetupConfig(t *testing.T) {
             "probe_name": "probe2",
             "probe_url": "https://example.com",
             "probe_action": "check_match_payload",
-            "probe_match_string": "match_me"
+            "probe_match_string": "match_me",
+			"probe_http_headers": {
+                "host": "blah",
+                "user_agent": "test-agent"
+
+            }            
         }
     	},
     	{
@@ -50,6 +55,7 @@ func TestSetupConfig(t *testing.T) {
  "probe_http_method": "GET",
  "probe_action": "check_ret_200",
  "probe_match_string": null,
+ "probe_http_headers": null,
  "probe_interval": 30,
  "probe_timeout": 20
 }`)
@@ -60,6 +66,10 @@ func TestSetupConfig(t *testing.T) {
  "probe_http_method": "GET",
  "probe_action": "check_match_payload",
  "probe_match_string": "match_me",
+ "probe_http_headers": {
+  "host": "blah",
+  "user_agent": "test-agent"
+ },
  "probe_interval": 60,
  "probe_timeout": 40
 }`)

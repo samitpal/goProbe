@@ -81,10 +81,12 @@ Http probe json configs
 ### Other fields
 
 * probe\_http_method : The http method. Default value is http GET.
-* probe\_action : This configures the mechanism used to determine the  success/failure of a probe. Currently it can be either of the following strings
+* probe\_action : This configures the mechanism used to determine the  success/failure of a probe. Currently it can be one of the following strings
     * check\_ret\_200 : It checks if the response status code is 200. This is the default.
     * check\_match\_string : If this is set then probe\_match\_string needs to be set as well. Essentially the module will match the http body with the probe\_match\_string string.
+    * check\_sslcert\_expiry : It checks if the ssl cert is expiring within probe\_sslcert\_expire\_in\_days days.
 * probe\_match\_string : This needs to be set to a regexp if probe_action is set to "check\_match\_string". 
+* probe\_sslcert\_expire\_in_days: Goes with "check\_sslcert\_expiry" action. Default value is 30 days.
 * probe\_interval : The frequency (in seconds) with which to run the probe. Default value is 60.
 * probe\_timeout : Time out in seconds for a given probe. Default value is 40. This value needs to be less than the probe\_interval.
 * probe\_http\_headers: This config object is used to set http request headers. Following is an example usage.

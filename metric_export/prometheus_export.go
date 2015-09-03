@@ -91,7 +91,7 @@ func (p *prometheusExport) IncProbeTimeoutCount(probeName string) {
 func (p *prometheusExport) SetFieldValues(probeName string, pd *modules.ProbeData) {
 	p.ProbeIsUp.WithLabelValues(probeName).Set(*pd.IsUp)
 	p.ProbeLatency.WithLabelValues(probeName).Set(*pd.Latency)
-	if p.ProbePayloadSize != nil {
+	if pd.PayloadSize != nil {
 		p.ProbePayloadSize.WithLabelValues(probeName).Set(*pd.PayloadSize)
 	}
 }

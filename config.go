@@ -5,6 +5,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/samitpal/goProbe/modules"
 	"github.com/samitpal/goProbe/modules/http"
+	"github.com/samitpal/goProbe/modules/ping_port"
 )
 
 /* Example json config
@@ -37,6 +38,19 @@ func setupConfig(config []byte) ([]modules.Prober, error) {
 	for _, c := range p {
 		if c.ProbeType == "http" {
 			t := http.NewHttpProbe()
+			err := json.Unmarshal(c.ProbeConfig, t)
+			if err != nil {
+				return nil, err
+			}
+			// Call the module's Prepare method which should do its own initialization (if any).
+			err = t.Prepare()
+			if err == nil {
+				probes = append(probes, t)
+			} else {
+				glog.Errorf("Error in config: %v", err)
+			}
+		} else if c.ProbeType == "ping_port" {
+			t := ping_port.NewPingPortProbe()
 			err := json.Unmarshal(c.ProbeConfig, t)
 			if err != nil {
 				return nil, err

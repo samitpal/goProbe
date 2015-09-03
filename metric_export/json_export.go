@@ -89,9 +89,11 @@ func (pm *jsonExport) SetFieldValues(s string, pd *modules.ProbeData) {
 	pm.ProbeLatency.Latency[s] = *pd.Latency
 	pm.ProbeLatency.Unlock()
 
-	pm.ProbePayloadSize.Lock()
-	pm.ProbePayloadSize.Payload[s] = *pd.PayloadSize
-	pm.ProbePayloadSize.Unlock()
+	if pd.PayloadSize != nil {
+		pm.ProbePayloadSize.Lock()
+		pm.ProbePayloadSize.Payload[s] = *pd.PayloadSize
+		pm.ProbePayloadSize.Unlock()
+	}
 }
 
 // SetFieldValuesUnexpected sets values to the fields to -1 to indicate a probe error/timeout.

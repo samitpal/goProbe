@@ -1,6 +1,7 @@
 package http
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"github.com/golang/glog"
@@ -12,14 +13,15 @@ import (
 )
 
 type httpProbe struct {
-	ProbeName        *string       `json:"probe_name"`
-	ProbeURL         *string       `json:"probe_url"`
-	ProbeHttpMethod  *string       `json:"probe_http_method"`
-	ProbeAction      *string       `json:"probe_action"`
-	ProbeMatchString *string       `json:"probe_match_string"` // a regulat expression.
-	ProbeHttpHeaders *probeHeaders `json:"probe_http_headers"` // request headers.
-	ProbeInterval    *int          `json:"probe_interval"`
-	ProbeTimeout     *int          `json:"probe_timeout"`
+	ProbeName                 *string       `json:"probe_name"`
+	ProbeURL                  *string       `json:"probe_url"`
+	ProbeHttpMethod           *string       `json:"probe_http_method"`
+	ProbeAction               *string       `json:"probe_action"`
+	ProbeMatchString          *string       `json:"probe_match_string"`            // a regulat expression.
+	ProbeHttpHeaders          *probeHeaders `json:"probe_http_headers"`            // request headers.
+	ProbeSSLCertExpiresInDays *int          `json:"probe_sslcert_expires_in_days"` // ssl cert expire within these many days.
+	ProbeInterval             *int          `json:"probe_interval"`
+	ProbeTimeout              *int          `json:"probe_timeout"`
 }
 
 type probeHeaders struct {
@@ -39,8 +41,10 @@ func (p httpProbe) checkConfig() error {
 		return errors.New("Required field ProbeURL is not set")
 	}
 
-	if p.ProbeAction != nil && p.ProbeMatchString == nil {
-		return errors.New("ProbeMatchString is required")
+	if p.ProbeAction != nil {
+		if *p.ProbeAction == "check_match_payload" && p.ProbeMatchString == nil {
+			return errors.New("probe_match_string is required")
+		}
 	}
 	if p.ProbeHttpMethod != nil {
 		if *p.ProbeHttpMethod == "GET" || *p.ProbeHttpMethod == "HEAD" {
@@ -61,6 +65,11 @@ func (p *httpProbe) setDefaults() {
 	if p.ProbeAction == nil {
 		str := "check_ret_200"
 		p.ProbeAction = &str
+	} else if *p.ProbeAction == "check_sslcert_expiry" {
+		if p.ProbeSSLCertExpiresInDays == nil {
+			expires_in_days := 30
+			p.ProbeSSLCertExpiresInDays = &expires_in_days
+		}
 	}
 	if p.ProbeTimeout == nil {
 		i := 40
@@ -78,6 +87,20 @@ func setCustomHeaders(ph *probeHeaders, r *http.Request) {
 	}
 	if ph.UserAgent != nil {
 		r.Header.Add("User-Agent", *ph.UserAgent)
+	}
+}
+
+// expiredSSLCert returns a 0 if the sslcert is invalid till given time t, else it returns 1.
+func expiredSSLCert(tlsState *tls.ConnectionState, tdays int) float64 {
+	// time after the given duration t days in utc
+	th := time.Now().UTC().Add(24 * time.Hour * time.Duration(tdays))
+
+	// the first peer certificate presented should be the cert of the target host.
+	te := tlsState.PeerCertificates[0].NotAfter
+	if te.After(th) {
+		return 1
+	} else {
+		return 0
 	}
 }
 
@@ -138,6 +161,14 @@ func (p httpProbe) Run(respCh chan<- *modules.ProbeData, errCh chan<- error) {
 			isUp = 1
 		} else {
 			isUp = 0
+		}
+	} else if *p.ProbeAction == "check_sslcert_expiry" {
+		if resp.TLS == nil {
+			// it might be an unencrypted connection.
+			errCh <- errors.New("No TLS info found. Is it an unencrypted connection?")
+			return
+		} else {
+			isUp = expiredSSLCert(resp.TLS, *p.ProbeSSLCertExpiresInDays)
 		}
 	}
 

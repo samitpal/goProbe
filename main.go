@@ -194,9 +194,9 @@ func main() {
 	if !*dryRun {
 		// Start probing.
 		go runProbes(probes, mExp)
-	}
-	if err = http.ListenAndServe(*listenAddress, nil); err != nil {
-		panic(err)
+		if err = http.ListenAndServe(*listenAddress, nil); err != nil {
+			panic(err)
+		}
 	}
 
 }

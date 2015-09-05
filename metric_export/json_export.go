@@ -39,11 +39,11 @@ type ProbePayloadSize struct {
 
 type jsonExport struct {
 	ProbeCount
-	ProbeErrorCount
-	ProbeTimeoutCount
-	ProbeIsUp
-	ProbeLatency
-	ProbePayloadSize
+	ProbeErrorCount   // error count indicates error in probe module.
+	ProbeTimeoutCount // timeout count increases when a probe times out.
+	ProbeIsUp         // value of 1 is success, 0 is failure. -value of -1 could be because of probe module failure/timeout.
+	ProbeLatency      // latency in milli seconds.
+	ProbePayloadSize  // size of the response payload.
 }
 
 func NewJSONExport() *jsonExport {
@@ -96,7 +96,7 @@ func (pm *jsonExport) SetFieldValues(s string, pd *modules.ProbeData) {
 	}
 }
 
-// SetFieldValuesUnexpected sets values to the fields to -1 to indicate a probe error/timeout.
+// SetFieldValuesUnexpected sets values to the fields to -1 to indicate a probe module error/timeout.
 func (pm *jsonExport) SetFieldValuesUnexpected(s string) {
 	pm.ProbeIsUp.Lock()
 	pm.ProbeIsUp.Up[s] = -1

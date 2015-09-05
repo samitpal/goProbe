@@ -90,9 +90,9 @@ func setCustomHeaders(ph *probeHeaders, r *http.Request) {
 	}
 }
 
-// expiredSSLCert returns a 0 if the sslcert is invalid till given time t, else it returns 1.
+// expiredSSLCert returns a 0 if the sslcert is going invalid in the next given days, it returns 1 if otherwise.
 func expiredSSLCert(tlsState *tls.ConnectionState, tdays int) float64 {
-	// time after the given duration t days in utc
+	// time after the given duration tdays days in utc
 	th := time.Now().UTC().Add(24 * time.Hour * time.Duration(tdays))
 
 	// the first peer certificate presented should be the cert of the target host.

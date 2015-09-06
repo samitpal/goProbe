@@ -7,6 +7,7 @@ func TestCheckConfig(t *testing.T) {
 	pn := "probe1"
 	pu := "http://example.com"
 	pa := "check_match_payload"
+	pai := "check_invalid_action" // invalid action
 	pm := "invalid_method"
 
 	// test without probe url.
@@ -44,4 +45,13 @@ func TestCheckConfig(t *testing.T) {
 		t.Errorf("Probe http method is invalid. Test expected to fail but is passing")
 	}
 
+	// test for invalid probe action.
+	hm5 := NewHttpProbe()
+	hm5.ProbeName = &pn
+	hm5.ProbeURL = &pu
+	hm5.ProbeAction = &pai
+	err = hm5.checkConfig()
+	if err == nil {
+		t.Errorf("Probe http action is invalid. Test expected to fail but is passing")
+	}
 }

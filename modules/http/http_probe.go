@@ -42,6 +42,9 @@ func (p httpProbe) checkConfig() error {
 	}
 
 	if p.ProbeAction != nil {
+		if *p.ProbeAction != "check_ret_200" && *p.ProbeAction != "check_match_payload" && *p.ProbeAction != "check_sslcert_expiry" {
+			return errors.New("Probe action has to be one of check_ret_200, check_match_payload, check_sslcert_expiry")
+		}
 		if *p.ProbeAction == "check_match_payload" && p.ProbeMatchString == nil {
 			return errors.New("probe_match_string is required")
 		}

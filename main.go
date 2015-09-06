@@ -60,10 +60,10 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter) {
 
 				glog.Infof("Launching new probe:%s", pn)
 				go p.Run(respCh, errCh)
-				mExp.IncProbeCount(pn)
 
 				select {
 				case msg := <-respCh:
+					mExp.IncProbeCount(pn)
 					err := checkProbeData(msg)
 					if err != nil {
 						glog.Errorf("Error: %v", err)
@@ -74,10 +74,12 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter) {
 					}
 				case err_msg := <-errCh:
 					glog.Errorf("Probe %s error'ed out: %v", pn, err_msg)
+					mExp.IncProbeCount(pn)
 					mExp.IncProbeErrorCount(pn)
 					mExp.SetFieldValuesUnexpected(pn)
 				case <-time.After(time.Duration(to) * time.Second):
 					glog.Errorf("Timed out probe:%v ", pn)
+					mExp.IncProbeCount(pn)
 					mExp.IncProbeTimeoutCount(pn)
 					mExp.SetFieldValuesUnexpected(pn)
 				}

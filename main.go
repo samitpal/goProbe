@@ -163,7 +163,7 @@ func main() {
 	}
 	probes, err := setupConfig(config)
 	if err != nil {
-		glog.Exitf("Error in setup, exiting: %v", err)
+		glog.Exitf("Error in config setup, exiting: %v", err)
 	}
 	err = checkProbeConfig(probes)
 	if err != nil {
@@ -199,6 +199,8 @@ func main() {
 		if err = http.ListenAndServe(*listenAddress, nil); err != nil {
 			panic(err)
 		}
+	} else {
+		glog.Info("Dry run mode.")
 	}
 
 }

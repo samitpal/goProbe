@@ -156,3 +156,46 @@ func TestSetupConfig(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckDuplicateProbeNames(t *testing.T) {
+	// config with duplicate probe names
+	config := []byte(`
+		[
+    	{
+        "probe_type": "http",
+        "probe_config": {
+            "probe_name": "probe1",
+            "probe_url": "http://example.com",
+            "probe_timeout": 20,
+            "probe_interval": 30
+
+        }	
+    	},
+    	{
+        "probe_type": "http",
+        "probe_config": {
+            "probe_name": "probe1",
+            "probe_url": "https://example.com",
+            "probe_action": "check_match_payload",
+            "probe_match_string": "match_me",
+			"probe_http_headers": {
+                "host": "blah",
+                "user_agent": "test-agent"
+
+            }            
+        }
+    	},
+    	{
+        "probe_type": "http",
+        "probe_config": {
+            "probe_name": "probe3",
+            "probe_url": "https://example.com",
+            "probe_action": "check_sslcert_expiry"
+        }	
+    	}]`)
+
+	_, err := setupConfig(config)
+	if err == nil {
+		t.Error("Expecting error due to duplicate probe names, but test is passing")
+	}
+}

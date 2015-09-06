@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/samitpal/goProbe/modules"
 	"github.com/samitpal/goProbe/modules/http"
@@ -65,6 +66,19 @@ func setupConfig(config []byte) ([]modules.Prober, error) {
 		}
 		// Add a new 'else if' statement here for a new probe type.
 	}
-
+	if err = checkDuplicateProbeNames(probes); err != nil {
+		return nil, err
+	}
 	return probes, nil
+}
+
+func checkDuplicateProbeNames(pms []modules.Prober) error {
+	probeCount := make(map[string]int)
+	for _, pm := range pms {
+		probeCount[*pm.Name()]++
+		if probeCount[*pm.Name()] > 1 {
+			return fmt.Errorf("Duplicate probe name '%s' found.", *pm.Name())
+		}
+	}
+	return nil
 }

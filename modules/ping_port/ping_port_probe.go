@@ -79,7 +79,9 @@ func (p *pingPortProbe) Run(respCh chan<- *modules.ProbeData, errCh chan<- error
 	var isUp float64
 	// we set timeout less by 1 sec since we want a slightly higher timeout for the caller (core).
 	timeout := *p.ProbeTimeout - 1
-	_, err := net.DialTimeout(*p.ProbeNetwork, *p.ProbeHostName+":"+strconv.Itoa(*p.ProbeHostPort), time.Duration(timeout)*time.Second)
+	conn, err := net.DialTimeout(*p.ProbeNetwork, *p.ProbeHostName+":"+strconv.Itoa(*p.ProbeHostPort), time.Duration(timeout)*time.Second)
+	defer conn.Close()
+
 	if err != nil {
 		isUp = 0
 	} else {

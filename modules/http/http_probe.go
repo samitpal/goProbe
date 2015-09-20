@@ -142,6 +142,7 @@ func (p httpProbe) Run(respCh chan<- *modules.ProbeData, errCh chan<- error) {
 
 	respPayloadSize := float64(resp.ContentLength)
 	respHeader := resp.Header
+	respStatus := resp.Status
 	respPayload, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		glog.Errorf("Error: %v", err)
@@ -184,7 +185,7 @@ func (p httpProbe) Run(respCh chan<- *modules.ProbeData, errCh chan<- error) {
 		Latency:     &latency,
 		StartTime:   &startTime,
 		EndTime:     &endTime,
-		Headers:     &respHeader,
+		Http:        &modules.HttpFields{Headers: &respHeader, Status: &respStatus},
 		Payload:     &respPayload,
 	}
 	return

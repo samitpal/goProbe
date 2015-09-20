@@ -4,15 +4,20 @@ import (
 	"net/http"
 )
 
+type HttpFields struct {
+	Headers *http.Header
+	Status  *string
+}
+
 // Probedata is the struct which holds the probe response info.
 type ProbeData struct {
-	IsUp        *float64     // Indicates the success/failure of the probe.
-	PayloadSize *float64     // Optional. Response payload size.
-	Latency     *float64     // Latency in milli seconds.
-	StartTime   *int64       // Unix epoch in nano seconds.
-	EndTime     *int64       // Unix epoch in nano seconds.
-	Headers     *http.Header // Optional, primarily for the http module.
-	Payload     *[]byte      // Optional.
+	IsUp        *float64    // Indicates the success/failure of the probe.
+	PayloadSize *float64    // Optional. Response payload size.
+	Latency     *float64    // Latency in milli seconds.
+	StartTime   *int64      // Unix epoch in nano seconds.
+	EndTime     *int64      // Unix epoch in nano seconds.
+	Http        *HttpFields // Optional, for the http module.
+	Payload     *[]byte     // Optional.
 }
 
 // Prober is the interface that a probe module needs to implement.

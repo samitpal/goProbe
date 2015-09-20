@@ -1,8 +1,151 @@
-{{define "statusPage"}}
-  {{template "header"}} 
+{{ define "statusPage" }}
+	{{ template "header" }} 
 
-  {{template "common"}}
-  <p> Not implemented yet. <p>
-  
-  {{template "footer"}}
-{{end}}
+	{{ template "common" }}
+	
+	<div class="Table">
+
+	{{/* if it is a single probe */}}
+	{{ if eq .Tmpl.ShowParams "single_probe" }}
+		{{ $probeData := .ReadProbeStatus .Tmpl.ProbeSingle }}
+		<div class="Heading">
+			<div class="Cell">
+            	<p>Probe Name</p>
+       	 	</div>
+        	<div class="Cell">
+            	<p>Last probe status</p>
+	        </div>
+    	    <div class="Cell">
+        	    <p>Start time</p>
+        	</div>
+        	<div class="Cell">
+        	    <p>End time</p>
+        	</div>
+        	<div class="Cell">
+        	    <p>Latency (ms)</p>
+        	</div>
+        	<div class="Cell">
+        	    <p>Payload Size (bytes)</p>
+        	</div>
+        	<div class="Cell">
+        	    <p>Http status</p>
+        	</div>
+        	<div class="Cell">
+        	    <p>Response Headers</p>
+        	</div>
+        </div>
+        <div class="Row">
+       		<div class="Cell">
+       			<p>{{ .Tmpl.ProbeSingle }}</p>
+       		</div>
+   			{{ if $probeData.ProbeResp }}
+   			<div class="Cell">
+   				{{ if $.ConvertToInt $probeData.ProbeResp.IsUp }}
+   					<p class="GreenTick">&#x2713;</p>
+   				{{ else }}
+   					<p class="RedCross">&#x2717;</p>
+   				{{ end }}  				
+   			</div>
+        		{{ else if $probeData.ProbeError }}
+   			<div class="Cell">
+    			<p>Probe error'ed out. Check logs.</p>
+    		</div>
+				{{ else if $probeData.ProbeTimeout }}
+			<div class="Cell">
+   				<p>Probe timed out. Check logs.</p>
+   			</div>
+		    	{{ end }}
+		    <div class="Cell">
+            	<p>{{ $.FormattedTime $probeData.ProbeResp.StartTime }}</p>
+        	</div>
+        	<div class="Cell">
+            	<p>{{ $.FormattedTime $probeData.ProbeResp.EndTime }}</p>
+        	</div>
+        	<div class="Cell">
+            	<p>{{ $probeData.ProbeResp.Latency }}</p>
+        	</div>
+        	<div class="Cell">
+        		{{ if $probeData.ProbeResp.PayloadSize }}
+            		<p>{{ $probeData.ProbeResp.PayloadSize }}</p>
+            	{{ else }}
+            		<p>-</p>
+            	{{ end }}
+        	</div>
+        	<div class="Cell">
+        		{{ if $probeData.ProbeResp.Http }}
+            		<p>{{ $probeData.ProbeResp.Http.Status }}</p>
+            	{{ else }}
+            		<p>-</p>
+            	{{ end }}
+        	</div>
+        	<div class="Cell">
+        		{{ if $probeData.ProbeResp.Http }}
+            		<p>{{ $.FormattedHttpHeaders $probeData.ProbeResp.Http.Headers }}</p>
+            	{{ else }}
+            		<p>-</p>
+            	{{ end }}
+        	</div>
+        </div> 
+    </div> {{/* closing div for the table */}}
+	{{ else }}
+	{{/* show all failing/passing probes */}}
+	<div class="Table">
+		<div class="Heading">
+			<div class="Cell">
+            	<p>Probe Name</p>
+       	 	</div>
+        	<div class="Cell">
+            	<p>Status</p>
+	        </div>
+    	    <div class="Cell">
+        	    <p>Time of last probe</p>
+        	</div>
+        </div>
+		{{ range $element := .Probes }}
+			{{ $probeData := $.ReadProbeStatus $element }}
+			{{ if $probeData }}
+				<div class="Row">
+        			<div class="Cell">
+        				{{ if $probeData.ProbeResp }}
+            				<p><a href="status?showparams=single_probe&probe_name={{ $element }}">{{ $element }}</a></p>
+            			{{ else }}
+            				<p>{{ $element }}</p>
+            			{{ end }}
+        			</div>
+        			
+	    		{{ if $probeData.ProbeResp }}
+	    			<div class="Cell">
+	    				
+	    				{{ if $.ConvertToInt $probeData.ProbeResp.IsUp }}
+	    					<p class="GreenTick">&#x2713;</p>
+	    				{{ else }}
+	    					<p class="RedCross">&#x2717;</p>
+	    				{{ end }}
+	    				
+	    			</div>
+	    			
+        		{{ else if $probeData.ProbeError }}
+        			<div class="Cell">
+		    			<p>Probe error'ed out. Check logs.</p>
+		    		</div>
+				{{ else if $probeData.ProbeTimeout }}
+					<div class="Cell">
+	    				<p>Probe timed out. Check logs.</p>
+	    			</div>
+		    	{{ end }}
+		    	{{ if $probeData.ProbeResp }}
+		    		<div class="Cell">
+            			<p>{{ $.FormattedTime $probeData.ProbeResp.StartTime }}</p>
+        			</div>
+        		{{ else }}
+        			<div class="Cell">
+        				<p>-</p>
+        			</div>	
+        		{{ end }}
+        		</div>
+	    	{{ end }}
+	  	{{ end }}
+	</div>	{{/* end of table */}}
+	{{ end }}
+	{{ template "footer" }}
+{{ end }}

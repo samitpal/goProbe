@@ -72,6 +72,7 @@ func setupConfig(config []byte) ([]modules.Prober, error) {
 	return probes, nil
 }
 
+// checkDuplicateProbeNames checks for duplicate probe names.
 func checkDuplicateProbeNames(pms []modules.Prober) error {
 	probeCount := make(map[string]int)
 	for _, pm := range pms {
@@ -81,4 +82,12 @@ func checkDuplicateProbeNames(pms []modules.Prober) error {
 		}
 	}
 	return nil
+}
+
+func getProbeNames(pms []modules.Prober) []string {
+	var probeNames []string
+	for _, pm := range pms {
+		probeNames = append(probeNames, *pm.Name())
+	}
+	return probeNames
 }

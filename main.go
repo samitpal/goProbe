@@ -7,6 +7,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
 	"github.com/samitpal/goProbe/metric_export"
+	"github.com/samitpal/goProbe/misc"
 	"github.com/samitpal/goProbe/modules"
 	"html/template"
 	"io/ioutil"
@@ -42,7 +43,7 @@ func setupMetricExporter(s string) (metric_export.MetricExporter, error) {
 }
 
 // runProbes actually runs the probes. This is the core.
-func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter) {
+func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps misc.ProbesStatus) {
 	for _, p := range probes {
 		// Add some randomness to space out the probes a bit at start up.
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -63,25 +64,29 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter) {
 
 				select {
 				case msg := <-respCh:
-					mExp.IncProbeCount(pn)
 					err := checkProbeData(msg)
+					mExp.IncProbeCount(pn)
 					if err != nil {
 						glog.Errorf("Error: %v", err)
 						mExp.IncProbeErrorCount(pn)
 						mExp.SetFieldValuesUnexpected(pn)
+						ps.WriteProbeErrorStatus(pn)
 					} else {
 						mExp.SetFieldValues(pn, msg)
+						ps.WriteProbeStatus(pn, msg)
 					}
 				case err_msg := <-errCh:
 					glog.Errorf("Probe %s error'ed out: %v", pn, err_msg)
 					mExp.IncProbeCount(pn)
 					mExp.IncProbeErrorCount(pn)
 					mExp.SetFieldValuesUnexpected(pn)
+					ps.WriteProbeErrorStatus(pn)
 				case <-time.After(time.Duration(to) * time.Second):
 					glog.Errorf("Timed out probe:%v ", pn)
 					mExp.IncProbeCount(pn)
 					mExp.IncProbeTimeoutCount(pn)
 					mExp.SetFieldValuesUnexpected(pn)
+					ps.WriteProbeTimeoutStatus(pn)
 				}
 				<-timer.C
 			}
@@ -146,11 +151,18 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleStatus(w http.ResponseWriter, r *http.Request) {
-	err := templates.ExecuteTemplate(w, "statusPage", nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+func handleStatus(ps *misc.ProbesStatus) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		showParams := r.URL.Query().Get("showparams")
+		if showParams == "single_probe" {
+			ps.Tmpl.ProbeSingle = r.URL.Query().Get("probe_name")
+		}
+		ps.Tmpl.ShowParams = showParams
+		err := templates.ExecuteTemplate(w, "statusPage", *ps)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -170,6 +182,7 @@ func main() {
 		glog.Exitf("Error in probe config, exiting: %v", err)
 	}
 
+	probeNames := getProbeNames(probes)
 	mExp, err := setupMetricExporter(*expositionType)
 	if err != nil {
 		glog.Exitf("Error : %v", err)
@@ -185,8 +198,9 @@ func main() {
 		fh = os.Stdout // logs web accesses to stdout. May not be thread safe.
 	}
 
+	ps := misc.NewProbesStatus(probeNames)
 	http.Handle("/", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(handleHomePage)))
-	http.Handle("/status", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(handleStatus)))
+	http.Handle("/status", handlers.CombinedLoggingHandler(fh, handleStatus(&ps)))
 	http.Handle("/config", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(handleConfig)))
 	http.Handle(*metricsPath, handlers.CombinedLoggingHandler(fh, mExp.MetricHttpHandler()))
 
@@ -195,12 +209,11 @@ func main() {
 
 	if !*dryRun {
 		// Start probing.
-		go runProbes(probes, mExp)
+		go runProbes(probes, mExp, ps)
 		if err = http.ListenAndServe(*listenAddress, nil); err != nil {
 			panic(err)
 		}
 	} else {
 		glog.Info("Dry run mode.")
 	}
-
 }

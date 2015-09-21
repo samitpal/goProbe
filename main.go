@@ -43,7 +43,7 @@ func setupMetricExporter(s string) (metric_export.MetricExporter, error) {
 }
 
 // runProbes actually runs the probes. This is the core.
-func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps misc.ProbesStatus) {
+func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *misc.ProbesStatus) {
 	for _, p := range probes {
 		// Add some randomness to space out the probes a bit at start up.
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -158,7 +158,7 @@ func handleStatus(ps *misc.ProbesStatus) http.HandlerFunc {
 			ps.Tmpl.ProbeSingle = r.URL.Query().Get("probe_name")
 		}
 		ps.Tmpl.ShowParams = showParams
-		err := templates.ExecuteTemplate(w, "statusPage", *ps)
+		err := templates.ExecuteTemplate(w, "statusPage", ps)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -200,7 +200,7 @@ func main() {
 
 	ps := misc.NewProbesStatus(probeNames)
 	http.Handle("/", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(handleHomePage)))
-	http.Handle("/status", handlers.CombinedLoggingHandler(fh, handleStatus(&ps)))
+	http.Handle("/status", handlers.CombinedLoggingHandler(fh, handleStatus(ps)))
 	http.Handle("/config", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(handleConfig)))
 	http.Handle(*metricsPath, handlers.CombinedLoggingHandler(fh, mExp.MetricHttpHandler()))
 

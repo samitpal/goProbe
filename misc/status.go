@@ -27,15 +27,15 @@ type ProbesStatus struct {
 	lock           sync.RWMutex
 }
 
-func NewProbesStatus(p []string) ProbesStatus {
-	return ProbesStatus{
+func NewProbesStatus(p []string) *ProbesStatus {
+	return &ProbesStatus{
 		Tmpl:           TemplateParams{ShowParams: "all", ProbeSingle: ""},
 		Probes:         p,
 		ProbeStatusMap: make(map[string]*ProbeStatus),
 	}
 }
 
-func (ps ProbesStatus) WriteProbeStatus(pn string, pd *modules.ProbeData) {
+func (ps *ProbesStatus) WriteProbeStatus(pn string, pd *modules.ProbeData) {
 	ps.lock.Lock()
 	defer ps.lock.Unlock()
 
@@ -47,7 +47,7 @@ func (ps ProbesStatus) WriteProbeStatus(pn string, pd *modules.ProbeData) {
 
 }
 
-func (ps ProbesStatus) WriteProbeErrorStatus(pn string) {
+func (ps *ProbesStatus) WriteProbeErrorStatus(pn string) {
 	ps.lock.Lock()
 	defer ps.lock.Unlock()
 
@@ -59,7 +59,7 @@ func (ps ProbesStatus) WriteProbeErrorStatus(pn string) {
 
 }
 
-func (ps ProbesStatus) WriteProbeTimeoutStatus(pn string) {
+func (ps *ProbesStatus) WriteProbeTimeoutStatus(pn string) {
 	ps.lock.Lock()
 	defer ps.lock.Unlock()
 
@@ -70,7 +70,7 @@ func (ps ProbesStatus) WriteProbeTimeoutStatus(pn string) {
 	}
 }
 
-func (ps ProbesStatus) ReadProbeStatus(pn string) *ProbeStatus {
+func (ps *ProbesStatus) ReadProbeStatus(pn string) *ProbeStatus {
 	ps.lock.RLock()
 	defer ps.lock.RUnlock()
 
@@ -82,15 +82,15 @@ func (ps ProbesStatus) ReadProbeStatus(pn string) *ProbeStatus {
 	}
 }
 
-func (ps ProbesStatus) ConvertToInt(i *float64) int {
+func (ps *ProbesStatus) ConvertToInt(i *float64) int {
 	return int(*i)
 }
 
-func (ps ProbesStatus) FormattedTime(t *int64) time.Time {
+func (ps *ProbesStatus) FormattedTime(t *int64) time.Time {
 	return time.Unix(0, *t)
 }
 
-func (ps ProbesStatus) FormattedHttpHeaders(h http.Header) template.HTML {
+func (ps *ProbesStatus) FormattedHttpHeaders(h http.Header) template.HTML {
 
 	var headers string
 	for key, value := range h {
@@ -99,6 +99,6 @@ func (ps ProbesStatus) FormattedHttpHeaders(h http.Header) template.HTML {
 	return template.HTML(headers) // we are assuming the headers are html safe.
 }
 
-func (ps ProbesStatus) FormattedHttpBody(body *[]byte) string {
+func (ps *ProbesStatus) FormattedHttpBody(body *[]byte) string {
 	return string(*body)
 }

@@ -14,10 +14,18 @@ import (
     {
         "probe_type": "http",
         "probe_config": {
-            "probe_name": "blah",
-            "probe_url": "http://abc.com"
+            "probe_name": "example_http",
+            "probe_url": "http://example.com"
 
         }
+    },
+    {
+	    "probe_type": "ping_port",
+	    "probe_config": {
+	        "probe_name": "example_ping_port_80",
+	        "probe_host_name": "example.com",
+	        "probe_host_port": 80
+	        }
     }
 ]
 */

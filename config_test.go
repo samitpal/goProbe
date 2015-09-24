@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestSetupConfig(t *testing.T) {
 	// config with 3 valid and 1 invalid http probes. It also has a valid ping_port probe.
@@ -197,5 +200,38 @@ func TestCheckDuplicateProbeNames(t *testing.T) {
 	_, err := setupConfig(config)
 	if err == nil {
 		t.Error("Expecting error due to duplicate probe names, but test is passing")
+	}
+}
+
+func TestGetProbeNames(t *testing.T) {
+	config := []byte(`
+        [
+        {
+        "probe_type": "http",
+        "probe_config": {
+            "probe_name": "probe1",
+            "probe_url": "http://example.com",
+            "probe_timeout": 20,
+            "probe_interval": 30
+        }   
+        },
+        {
+        "probe_type": "http",
+        "probe_config": {
+            "probe_name": "probe2",
+            "probe_url": "https://example.com",
+            "probe_action": "check_match_payload",
+            "probe_match_string": "match_me",
+            "probe_http_headers": {
+                "host": "blah",
+                "user_agent": "test-agent"
+            }            
+        }
+        }
+        ]`)
+	probes, _ := setupConfig(config)
+	probeNames := getProbeNames(probes)
+	if !reflect.DeepEqual(probeNames, []string{"probe1", "probe2"}) {
+		t.Errorf("Got: %v\n Want: %v", probeNames, []string{"probe1", "probe2"})
 	}
 }

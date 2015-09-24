@@ -206,6 +206,7 @@ func main() {
 
 	glog.Info("Starting goProbe server.")
 	glog.Infof("Will expose metrics in %s format via %s http path.", *expositionType, *metricsPath)
+	glog.Infof("/config shows current config, /status shows current probe status.")
 
 	if !*dryRun {
 		// Start probing.

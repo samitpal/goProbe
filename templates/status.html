@@ -56,10 +56,10 @@
    			</div>
 		    	{{ end }}
 		    <div class="Cell">
-            	<p>{{ $.FormattedTime $probeData.ProbeResp.StartTime }}</p>
+            	<p>{{ $.FormattedTime $probeData.ProbeStartTime }}</p>
         	</div>
         	<div class="Cell">
-            	<p>{{ $.FormattedTime $probeData.ProbeResp.EndTime }}</p>
+            	<p>{{ $.FormattedTime $probeData.ProbeEndTime }}</p>
         	</div>
         	<div class="Cell">
             	<p>{{ $probeData.ProbeResp.Latency }}</p>
@@ -133,9 +133,9 @@
 	    				<p>Probe timed out. Check logs.</p>
 	    			</div>
 		    	{{ end }}
-		    	{{ if $probeData.ProbeResp }}
+		    	{{ if $probeData.ProbeStartTime }}
 		    		<div class="Cell">
-            			<p>{{ $.FormattedTime $probeData.ProbeResp.StartTime }}</p>
+            			<p>{{ $.FormattedTime $probeData.ProbeStartTime }}</p>
         			</div>
         		{{ else }}
         			<div class="Cell">

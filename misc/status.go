@@ -10,9 +10,11 @@ import (
 )
 
 type ProbeStatus struct {
-	ProbeResp    *modules.ProbeData
-	ProbeError   bool
-	ProbeTimeout bool
+	ProbeResp      *modules.ProbeData
+	ProbeError     bool
+	ProbeTimeout   bool
+	ProbeStartTime int64
+	ProbeEndTime   int64
 }
 
 type TemplateParams struct {
@@ -35,38 +37,44 @@ func NewProbesStatus(p []string) *ProbesStatus {
 	}
 }
 
-func (ps *ProbesStatus) WriteProbeStatus(pn string, pd *modules.ProbeData) {
+func (ps *ProbesStatus) WriteProbeStatus(pn string, pd *modules.ProbeData, st int64, et int64) {
 	ps.lock.Lock()
 	defer ps.lock.Unlock()
 
 	ps.ProbeStatusMap[pn] = &ProbeStatus{
-		ProbeResp:    pd,
-		ProbeError:   false,
-		ProbeTimeout: false,
+		ProbeResp:      pd,
+		ProbeError:     false,
+		ProbeTimeout:   false,
+		ProbeStartTime: st,
+		ProbeEndTime:   et,
 	}
 
 }
 
-func (ps *ProbesStatus) WriteProbeErrorStatus(pn string) {
+func (ps *ProbesStatus) WriteProbeErrorStatus(pn string, st int64, et int64) {
 	ps.lock.Lock()
 	defer ps.lock.Unlock()
 
 	ps.ProbeStatusMap[pn] = &ProbeStatus{
-		ProbeResp:    nil,
-		ProbeError:   true,
-		ProbeTimeout: false,
+		ProbeResp:      nil,
+		ProbeError:     true,
+		ProbeTimeout:   false,
+		ProbeStartTime: st,
+		ProbeEndTime:   et,
 	}
 
 }
 
-func (ps *ProbesStatus) WriteProbeTimeoutStatus(pn string) {
+func (ps *ProbesStatus) WriteProbeTimeoutStatus(pn string, st int64, et int64) {
 	ps.lock.Lock()
 	defer ps.lock.Unlock()
 
 	ps.ProbeStatusMap[pn] = &ProbeStatus{
-		ProbeResp:    nil,
-		ProbeError:   false,
-		ProbeTimeout: true,
+		ProbeResp:      nil,
+		ProbeError:     false,
+		ProbeTimeout:   true,
+		ProbeStartTime: st,
+		ProbeEndTime:   et,
 	}
 }
 

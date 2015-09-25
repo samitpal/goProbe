@@ -65,7 +65,7 @@ $ export GOPROBE_TMPL="templates/*"
 
 $ $GOPATH/bin/goProbe -config <*path to config file*>
 
-By default goProbe displays the probe metrics via the **/metrics** http handler in json format. It also displays the current configs via its **/config** http handler. The /status handler is yet to be implemented.
+By default goProbe displays the probe metrics via the **/metrics** http handler in json format. It also displays the current configs via its **/config** http handler. The /status handler displays the lastest probe status.
 
 To expose the metrics in prometheus format, run it as follows,
 

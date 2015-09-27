@@ -61,32 +61,33 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *m
 
 				glog.Infof("Launching new probe:%s", pn)
 				startTime := time.Now().UnixNano()
+				startTimeSecs := startTime / 1000000000 // used to expose time field in json metric expostion.
 				go p.Run(respCh, errCh)
 
 				select {
 				case msg := <-respCh:
 					err := checkProbeData(msg)
-					mExp.IncProbeCount(pn)
+					mExp.IncProbeCount(pn, startTimeSecs)
 					if err != nil {
 						glog.Errorf("Error: %v", err)
-						mExp.IncProbeErrorCount(pn)
-						mExp.SetFieldValuesUnexpected(pn)
+						mExp.IncProbeErrorCount(pn, startTimeSecs)
+						mExp.SetFieldValuesUnexpected(pn, startTimeSecs)
 						ps.WriteProbeErrorStatus(pn, startTime, time.Now().UnixNano())
 					} else {
-						mExp.SetFieldValues(pn, msg)
+						mExp.SetFieldValues(pn, msg, startTimeSecs)
 						ps.WriteProbeStatus(pn, msg, startTime, time.Now().UnixNano())
 					}
 				case err_msg := <-errCh:
 					glog.Errorf("Probe %s error'ed out: %v", pn, err_msg)
-					mExp.IncProbeCount(pn)
-					mExp.IncProbeErrorCount(pn)
-					mExp.SetFieldValuesUnexpected(pn)
+					mExp.IncProbeCount(pn, startTimeSecs)
+					mExp.IncProbeErrorCount(pn, startTimeSecs)
+					mExp.SetFieldValuesUnexpected(pn, startTimeSecs)
 					ps.WriteProbeErrorStatus(pn, startTime, time.Now().UnixNano())
 				case <-time.After(time.Duration(to) * time.Second):
 					glog.Errorf("Timed out probe:%v ", pn)
-					mExp.IncProbeCount(pn)
-					mExp.IncProbeTimeoutCount(pn)
-					mExp.SetFieldValuesUnexpected(pn)
+					mExp.IncProbeCount(pn, startTimeSecs)
+					mExp.IncProbeTimeoutCount(pn, startTimeSecs)
+					mExp.SetFieldValuesUnexpected(pn, startTimeSecs)
 					ps.WriteProbeTimeoutStatus(pn, startTime, time.Now().UnixNano())
 				}
 				<-timer.C

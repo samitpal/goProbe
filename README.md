@@ -71,6 +71,8 @@ To expose the metrics in prometheus format, run it as follows,
 
 $ $GOPATH/bin/goProbe -config <*path to config file*> -exposition_type prometheus
 
+The json format is time series friendly in that the metrics contain a time field. It just needs a simple script to parse the data from the /metrics end point and push that to a time series database like graphite, influxdb etc.
+
 Http probe json configs
 -------------------
 

@@ -73,22 +73,22 @@ func (p *prometheusExport) Prepare() {
 }
 
 // IncProbeCount increments the probe count of a given probe.
-func (p *prometheusExport) IncProbeCount(probeName string) {
+func (p *prometheusExport) IncProbeCount(probeName string, t int64) {
 	p.ProbeCount.WithLabelValues(probeName).Inc()
 }
 
 // IncErrorCount increments the error count of a given probe.
-func (p *prometheusExport) IncProbeErrorCount(probeName string) {
+func (p *prometheusExport) IncProbeErrorCount(probeName string, t int64) {
 	p.ProbeErrorCount.WithLabelValues(probeName).Inc()
 }
 
 // IncTimeoutCount increments the timeout count of a given probe.
-func (p *prometheusExport) IncProbeTimeoutCount(probeName string) {
+func (p *prometheusExport) IncProbeTimeoutCount(probeName string, t int64) {
 	p.ProbeTimeoutCount.WithLabelValues(probeName).Inc()
 }
 
 // SetFieldValues function sets the field values during normal times, e.g set the ‘up’ variable to 1 or 0.
-func (p *prometheusExport) SetFieldValues(probeName string, pd *modules.ProbeData) {
+func (p *prometheusExport) SetFieldValues(probeName string, pd *modules.ProbeData, t int64) {
 	p.ProbeIsUp.WithLabelValues(probeName).Set(*pd.IsUp)
 	p.ProbeLatency.WithLabelValues(probeName).Set(*pd.Latency)
 	if pd.PayloadSize != nil {
@@ -98,7 +98,7 @@ func (p *prometheusExport) SetFieldValues(probeName string, pd *modules.ProbeDat
 
 // SetFieldValuesUnexpected function sets field values during unexpected situations, e.g probe errors/timeouts. For instance
 // you might want to set the ‘up’ variable for a probe which timed out to -1 instead of a 0 or 1.
-func (p *prometheusExport) SetFieldValuesUnexpected(probeName string) {
+func (p *prometheusExport) SetFieldValuesUnexpected(probeName string, t int64) {
 	p.ProbeIsUp.WithLabelValues(probeName).Set(-1)
 	p.ProbeLatency.WithLabelValues(probeName).Set(-1)
 	p.ProbePayloadSize.WithLabelValues(probeName).Set(-1)

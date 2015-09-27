@@ -10,21 +10,23 @@ type MetricExporter interface {
 	// Prepare should be used for initialization. It is guranteed to be called first, before any another methods.
 	Prepare()
 
-	// IncProbeCount increments the probe count of a given probe.
-	IncProbeCount(string)
+	// IncProbeCount increments the probe count of a given probe. It takes the probe name and epoch time (seconds) as args.
+	IncProbeCount(string, int64)
 
-	// IncErrorCount increments the error count of a given probe.
-	IncProbeErrorCount(string)
+	// IncErrorCount increments the error count of a given probe.  It takes the probe name and epoch time (seconds) as args.
+	IncProbeErrorCount(string, int64)
 
-	// IncTimeoutCount increments the timeout count of a given probe.
-	IncProbeTimeoutCount(string)
+	// IncTimeoutCount increments the timeout count of a given probe.  It takes the probe name and epoch time (seconds) as args.
+	IncProbeTimeoutCount(string, int64)
 
 	// SetFieldValues function sets the field values during normal times, e.g set the ‘up’ variable to 1 or 0.
-	SetFieldValues(string, *modules.ProbeData)
+	// It takes the probe name, probe response and epoch time (seconds) as args.
+	SetFieldValues(string, *modules.ProbeData, int64)
 
 	// SetFieldValuesUnexpected function sets field values during unexpected situations, e.g probe errors/timeouts. For instance
 	// one might want to set the ‘up’ variable for a probe which timed out to -1 instead of a 0 or 1.
-	SetFieldValuesUnexpected(string)
+	// It takes the probe name and epoch time (seconds) as args.
+	SetFieldValuesUnexpected(string, int64)
 
 	//MetricHttpHandler returns the http handler to expose the metrics via a given path (e.g /metrics).
 	MetricHttpHandler() http.Handler

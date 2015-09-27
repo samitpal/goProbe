@@ -4,6 +4,7 @@ import (
 	"github.com/samitpal/goProbe/modules"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestSetFieldValues(t *testing.T) {
@@ -23,19 +24,20 @@ func TestSetFieldValues(t *testing.T) {
 	pn := "probe1"
 
 	je := NewJSONExport()
-	je.SetFieldValues(pn, &pd)
+	epochTime := time.Now().Unix()
+	je.SetFieldValues(pn, &pd, epochTime)
 
-	probe1Up := map[string]float64{"probe1": 1}
+	probe1Up := map[string]TimeValue{"probe1": TimeValue{1, epochTime}}
 	if !reflect.DeepEqual(probe1Up, je.ProbeIsUp.Up) {
 		t.Errorf("Got: %v\n Want: %v", je.ProbeIsUp.Up, probe1Up)
 	}
 
-	probe1Latency := map[string]float64{"probe1": 123}
+	probe1Latency := map[string]TimeValue{"probe1": TimeValue{123, epochTime}}
 	if !reflect.DeepEqual(probe1Latency, je.ProbeLatency.Latency) {
 		t.Errorf("Got: %v\n Want: %v", je.ProbeLatency.Latency, probe1Latency)
 	}
 
-	probe1PayloadSize := map[string]float64{"probe1": 45}
+	probe1PayloadSize := map[string]TimeValue{"probe1": TimeValue{45, epochTime}}
 	if !reflect.DeepEqual(probe1PayloadSize, je.ProbePayloadSize.Payload) {
 		t.Errorf("Got: %v\n Want: %v", je.ProbePayloadSize, probe1PayloadSize)
 	}
@@ -45,19 +47,20 @@ func TestSetFieldValues(t *testing.T) {
 func TestSetFieldValuesUnexpected(t *testing.T) {
 	pn := "probe1"
 	je := NewJSONExport()
-	je.SetFieldValuesUnexpected(pn)
+	epochTime := time.Now().Unix()
+	je.SetFieldValuesUnexpected(pn, epochTime)
 
-	probe1Up := map[string]float64{"probe1": -1}
+	probe1Up := map[string]TimeValue{"probe1": TimeValue{-1, epochTime}}
 	if !reflect.DeepEqual(probe1Up, je.ProbeIsUp.Up) {
 		t.Errorf("Got: %v\n Want: %v", je.ProbeIsUp.Up, probe1Up)
 	}
 
-	probe1Latency := map[string]float64{"probe1": -1}
+	probe1Latency := map[string]TimeValue{"probe1": TimeValue{-1, epochTime}}
 	if !reflect.DeepEqual(probe1Latency, je.ProbeLatency.Latency) {
 		t.Errorf("Got: %v\n Want: %v", je.ProbeLatency.Latency, probe1Latency)
 	}
 
-	probe1PayloadSize := map[string]float64{"probe1": -1}
+	probe1PayloadSize := map[string]TimeValue{"probe1": TimeValue{-1, epochTime}}
 	if !reflect.DeepEqual(probe1PayloadSize, je.ProbePayloadSize.Payload) {
 		t.Errorf("Got: %v\n Want: %v", je.ProbePayloadSize, probe1PayloadSize)
 	}

@@ -7,34 +7,39 @@ import (
 	"sync"
 )
 
+type TimeValue struct {
+	Value float64 `json:"value"`
+	Time  int64   `json:"time"`
+}
+
 type ProbeCount struct {
 	sync.RWMutex
-	Count map[string]int64 `json:"probe_count"`
+	Count map[string]TimeValue `json:"probe_count"`
 }
 
 type ProbeErrorCount struct {
 	sync.RWMutex
-	ErrorCount map[string]int64 `json:"probe_error_count"`
+	ErrorCount map[string]TimeValue `json:"probe_error_count"`
 }
 
 type ProbeTimeoutCount struct {
 	sync.RWMutex
-	TimeoutCount map[string]int64 `json:"probe_timeout_count"`
+	TimeoutCount map[string]TimeValue `json:"probe_timeout_count"`
 }
 
 type ProbeIsUp struct {
 	sync.RWMutex
-	Up map[string]float64 `json:"probe_is_up"` // value of 1 is a success while 0 is a failure.
+	Up map[string]TimeValue `json:"probe_is_up"` // value of 1 is a success while 0 is a failure.
 }
 
 type ProbeLatency struct {
 	sync.RWMutex
-	Latency map[string]float64 `json:"probe_latency"`
+	Latency map[string]TimeValue `json:"probe_latency"`
 }
 
 type ProbePayloadSize struct {
 	sync.RWMutex
-	Payload map[string]float64 `json:"probe_payload_size"`
+	Payload map[string]TimeValue `json:"probe_payload_size"`
 }
 
 type jsonExport struct {
@@ -48,12 +53,12 @@ type jsonExport struct {
 
 func NewJSONExport() *jsonExport {
 	return &jsonExport{
-		ProbeCount:        ProbeCount{Count: make(map[string]int64)},
-		ProbeErrorCount:   ProbeErrorCount{ErrorCount: make(map[string]int64)},
-		ProbeTimeoutCount: ProbeTimeoutCount{TimeoutCount: make(map[string]int64)},
-		ProbeIsUp:         ProbeIsUp{Up: make(map[string]float64)},
-		ProbeLatency:      ProbeLatency{Latency: make(map[string]float64)},
-		ProbePayloadSize:  ProbePayloadSize{Payload: make(map[string]float64)},
+		ProbeCount:        ProbeCount{Count: make(map[string]TimeValue)},
+		ProbeErrorCount:   ProbeErrorCount{ErrorCount: make(map[string]TimeValue)},
+		ProbeTimeoutCount: ProbeTimeoutCount{TimeoutCount: make(map[string]TimeValue)},
+		ProbeIsUp:         ProbeIsUp{Up: make(map[string]TimeValue)},
+		ProbeLatency:      ProbeLatency{Latency: make(map[string]TimeValue)},
+		ProbePayloadSize:  ProbePayloadSize{Payload: make(map[string]TimeValue)},
 	}
 
 }
@@ -62,52 +67,73 @@ func (pm *jsonExport) Prepare() {
 	// Nothing to do.
 }
 
-func (pm *jsonExport) IncProbeCount(s string) {
+func (pm *jsonExport) IncProbeCount(s string, t int64) {
 	pm.ProbeCount.Lock()
-	pm.ProbeCount.Count[s]++
+	var val float64
+	_, ok := pm.ProbeCount.Count[s]
+	if ok {
+		val = pm.ProbeCount.Count[s].Value + 1
+	} else {
+		val = 1
+	}
+	pm.ProbeCount.Count[s] = TimeValue{Value: val, Time: t}
 	pm.ProbeCount.Unlock()
 }
 
-func (pm *jsonExport) IncProbeErrorCount(s string) {
+func (pm *jsonExport) IncProbeErrorCount(s string, t int64) {
 	pm.ProbeErrorCount.Lock()
-	pm.ProbeErrorCount.ErrorCount[s]++
+	var val float64
+	_, ok := pm.ProbeErrorCount.ErrorCount[s]
+	if ok {
+		val = pm.ProbeErrorCount.ErrorCount[s].Value + 1
+	} else {
+		val = 1
+	}
+	pm.ProbeErrorCount.ErrorCount[s] = TimeValue{Value: val, Time: t}
 	pm.ProbeErrorCount.Unlock()
 }
 
-func (pm *jsonExport) IncProbeTimeoutCount(s string) {
+func (pm *jsonExport) IncProbeTimeoutCount(s string, t int64) {
 	pm.ProbeTimeoutCount.Lock()
-	pm.ProbeTimeoutCount.TimeoutCount[s]++
+	var val float64
+	_, ok := pm.ProbeTimeoutCount.TimeoutCount[s]
+	if ok {
+		val = pm.ProbeTimeoutCount.TimeoutCount[s].Value + 1
+	} else {
+		val = 1
+	}
+	pm.ProbeTimeoutCount.TimeoutCount[s] = TimeValue{Value: val, Time: t}
 	pm.ProbeTimeoutCount.Unlock()
 }
 
-func (pm *jsonExport) SetFieldValues(s string, pd *modules.ProbeData) {
+func (pm *jsonExport) SetFieldValues(s string, pd *modules.ProbeData, t int64) {
 	pm.ProbeIsUp.Lock()
-	pm.ProbeIsUp.Up[s] = *pd.IsUp
+	pm.ProbeIsUp.Up[s] = TimeValue{Value: *pd.IsUp, Time: t}
 	pm.ProbeIsUp.Unlock()
 
 	pm.ProbeLatency.Lock()
-	pm.ProbeLatency.Latency[s] = *pd.Latency
+	pm.ProbeLatency.Latency[s] = TimeValue{Value: *pd.Latency, Time: t}
 	pm.ProbeLatency.Unlock()
 
 	if pd.PayloadSize != nil {
 		pm.ProbePayloadSize.Lock()
-		pm.ProbePayloadSize.Payload[s] = *pd.PayloadSize
+		pm.ProbePayloadSize.Payload[s] = TimeValue{Value: *pd.PayloadSize, Time: t}
 		pm.ProbePayloadSize.Unlock()
 	}
 }
 
 // SetFieldValuesUnexpected sets values to the fields to -1 to indicate a probe module error/timeout.
-func (pm *jsonExport) SetFieldValuesUnexpected(s string) {
+func (pm *jsonExport) SetFieldValuesUnexpected(s string, t int64) {
 	pm.ProbeIsUp.Lock()
-	pm.ProbeIsUp.Up[s] = -1
+	pm.ProbeIsUp.Up[s] = TimeValue{Value: -1, Time: t}
 	pm.ProbeIsUp.Unlock()
 
 	pm.ProbeLatency.Lock()
-	pm.ProbeLatency.Latency[s] = -1
+	pm.ProbeLatency.Latency[s] = TimeValue{Value: -1, Time: t}
 	pm.ProbeLatency.Unlock()
 
 	pm.ProbePayloadSize.Lock()
-	pm.ProbePayloadSize.Payload[s] = -1
+	pm.ProbePayloadSize.Payload[s] = TimeValue{Value: -1, Time: t}
 	pm.ProbePayloadSize.Unlock()
 }
 

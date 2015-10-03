@@ -42,9 +42,12 @@ goProbe takes a json file as a config input which typically supplies the probe n
 
 Installation
 -------------------
-Precompiled binaries are available from the releases link.
+###### Docker image is available at https://hub.docker.com/r/samitpal/goprobe/
 
-To build from source follow the steps below: 
+###### Precompiled binaries are available from the releases link.
+https://github.com/samitpal/goProbe/releases/
+
+###### To build from source follow the steps below: 
 
 Install mercuruial. On ubuntu,
 
@@ -71,7 +74,7 @@ To expose the metrics in prometheus format, run it as follows,
 
 $ $GOPATH/bin/goProbe -config <*path to config file*> -exposition_type prometheus
 
-The json format is time series friendly in that the metrics contain a time field. It just needs a simple script to parse the data from the /metrics end point and push that to a time series database like graphite, influxdb etc.
+The json format is time series friendly in that the metrics contain a time field. It just needs a simple script to parse the data from the /metrics end point and push that to a time series database like graphite, influxdb etc. Example push scripts are available at https://github.com/samitpal/goProbe-metric-push.
 
 Http probe json configs
 -------------------

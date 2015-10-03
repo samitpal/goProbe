@@ -42,22 +42,22 @@ goProbe takes a json file as a config input which typically supplies the probe n
 
 Installation
 -------------------
-###### Docker image is available at https://hub.docker.com/r/samitpal/goprobe/
+##### Docker image is available at
+ https://hub.docker.com/r/samitpal/goprobe/
 
-###### Precompiled binaries are available from the releases link.
+##### Precompiled binaries are available from the releases link.
 https://github.com/samitpal/goProbe/releases/
 
-###### To build from source follow the steps below: 
+##### To build from source follow the steps below: 
 
-Install mercuruial. On ubuntu,
-
+* Install mercuruial. On ubuntu,
 $ sudo apt-get install mercurial
 
-$ go get -u github.com/samitpal/goProbe
+* $ go get -u github.com/samitpal/goProbe
 
-$ cd $GOPATH/src/github.com/samitpal/goProbe
+* $ cd $GOPATH/src/github.com/samitpal/goProbe
 
-$ go install
+* $ go install
 
 Running the binary
 -------------------

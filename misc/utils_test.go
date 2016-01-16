@@ -1,4 +1,4 @@
-package main
+package misc
 
 import (
 	"github.com/samitpal/goProbe/modules"
@@ -7,7 +7,7 @@ import (
 
 func TestCheckProbeConfig(t *testing.T) {
 	p := []modules.Prober{}
-	err := checkProbeConfig(p)
+	err := CheckProbeConfig(p)
 	if err == nil {
 		t.Error("Expected an error to be returned")
 	}
@@ -21,7 +21,7 @@ func TestCheckProbeData(t *testing.T) {
 
 	// Test 1
 	pd := &modules.ProbeData{Latency: &latency, StartTime: &startTime, EndTime: &endTime}
-	err := checkProbeData(pd)
+	err := CheckProbeData(pd)
 	if err == nil {
 		t.Errorf("Expected an error to be returned %v", err)
 
@@ -29,7 +29,7 @@ func TestCheckProbeData(t *testing.T) {
 
 	// Test 2
 	pd = &modules.ProbeData{IsUp: &up, StartTime: &startTime, EndTime: &endTime}
-	err = checkProbeData(pd)
+	err = CheckProbeData(pd)
 	if err == nil {
 		t.Errorf("Expected an error to be returned %v", err)
 
@@ -37,7 +37,7 @@ func TestCheckProbeData(t *testing.T) {
 
 	// Test 3
 	pd = &modules.ProbeData{IsUp: &up, Latency: &latency, EndTime: &endTime}
-	err = checkProbeData(pd)
+	err = CheckProbeData(pd)
 	if err == nil {
 		t.Errorf("Expected an error to be returned %v", err)
 
@@ -45,7 +45,7 @@ func TestCheckProbeData(t *testing.T) {
 
 	// Test 4
 	pd = &modules.ProbeData{IsUp: &up, Latency: &latency, StartTime: &startTime}
-	err = checkProbeData(pd)
+	err = CheckProbeData(pd)
 	if err == nil {
 		t.Errorf("Expected an error to be returned %v", err)
 

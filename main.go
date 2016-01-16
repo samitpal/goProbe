@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"flag"
-	"fmt"
 	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
 	"github.com/samitpal/goProbe/conf"
@@ -11,7 +10,6 @@ import (
 	"github.com/samitpal/goProbe/metric_export"
 	"github.com/samitpal/goProbe/misc"
 	"github.com/samitpal/goProbe/modules"
-	"html/template"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -28,7 +26,6 @@ var (
 	dryRun            = flag.Bool("dry_run", false, "Dry run mode where it does everything except running the probes.")
 	metricsPath       = flag.String("metric_path", "/metrics", "Metric exposition path.")
 	webLogDir         = flag.String("weblog_dir", "", "Directory path of the web log.")
-	templates         = template.Must(template.ParseGlob(os.Getenv("GOPROBE_TMPL")))
 )
 
 func setupMetricExporter(s string) (metric_export.MetricExporter, error) {
@@ -68,7 +65,7 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *m
 
 				select {
 				case msg := <-respCh:
-					err := checkProbeData(msg)
+					err := misc.CheckProbeData(msg)
 					mExp.IncProbeCount(pn, startTimeSecs)
 					if err != nil {
 						glog.Errorf("Error: %v", err)
@@ -98,78 +95,6 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *m
 	}
 }
 
-// checkProbeConfig function does sanity checks on the probe definition.
-func checkProbeConfig(probes []modules.Prober) error {
-	if len(probes) == 0 {
-		return errors.New("No probe modules defined")
-	}
-	for _, p := range probes {
-		if *p.TimeoutSecs() > *p.RunIntervalSecs() {
-			return fmt.Errorf("Timeout can not be more than the Interval %v", p.Name())
-		}
-	}
-	return nil
-}
-
-// checkProbedata function verifies the correctness of the probe response.
-func checkProbeData(pd *modules.ProbeData) error {
-	if pd.IsUp == nil {
-		return errors.New("Mandatory field 'IsUp' is missing in probe response")
-	}
-	if pd.Latency == nil {
-		return errors.New("Mandatory field 'Latency' is missing in probe response")
-	}
-	if pd.StartTime == nil {
-		return errors.New("Mandatory field 'StartTime' is missing in probe response")
-	}
-	if pd.EndTime == nil {
-		return errors.New("Mandatory field 'EndTime' is missing in probe response")
-	}
-	return nil
-}
-
-func handleHomePage(w http.ResponseWriter, r *http.Request) {
-	err := templates.ExecuteTemplate(w, "indexPage", nil)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-// TODO: Return pure json instead of html.
-func handleConfig(w http.ResponseWriter, r *http.Request) {
-	config, err := ioutil.ReadFile(*configFlag)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-	probes, err := conf.SetupConfig(config)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = templates.ExecuteTemplate(w, "configPage", probes)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func handleStatus(ps *misc.ProbesStatus) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		showParams := r.URL.Query().Get("showparams")
-		if showParams == "single_probe" {
-			ps.Tmpl.ProbeSingle = r.URL.Query().Get("probe_name")
-		}
-		ps.Tmpl.ShowParams = showParams
-		err := templates.ExecuteTemplate(w, "statusPage", ps)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-}
-
 func main() {
 
 	flag.Parse()
@@ -181,7 +106,7 @@ func main() {
 	if err != nil {
 		glog.Exitf("Error in config setup, exiting: %v", err)
 	}
-	err = checkProbeConfig(probes)
+	err = misc.CheckProbeConfig(probes)
 	if err != nil {
 		glog.Exitf("Error in probe config, exiting: %v", err)
 	}
@@ -203,9 +128,9 @@ func main() {
 	}
 
 	ps := misc.NewProbesStatus(probeNames)
-	http.Handle("/", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(handleHomePage)))
-	http.Handle("/status", handlers.CombinedLoggingHandler(fh, handleStatus(ps)))
-	http.Handle("/config", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(handleConfig)))
+	http.Handle("/", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(misc.HandleHomePage)))
+	http.Handle("/status", handlers.CombinedLoggingHandler(fh, misc.HandleStatus(ps)))
+	http.Handle("/config", handlers.CombinedLoggingHandler(fh, http.HandlerFunc(misc.HandleConfig(config))))
 	http.Handle(*metricsPath, handlers.CombinedLoggingHandler(fh, mExp.MetricHttpHandler()))
 
 	glog.Info("Starting goProbe server.")

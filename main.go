@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
+	"github.com/samitpal/goProbe/conf"
+	"github.com/samitpal/goProbe/log"
 	"github.com/samitpal/goProbe/metric_export"
 	"github.com/samitpal/goProbe/misc"
 	"github.com/samitpal/goProbe/modules"
@@ -140,7 +142,7 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	probes, err := setupConfig(config)
+	probes, err := conf.SetupConfig(config)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -175,7 +177,7 @@ func main() {
 	if err != nil {
 		glog.Exitf("Error reading config file: %v", err)
 	}
-	probes, err := setupConfig(config)
+	probes, err := conf.SetupConfig(config)
 	if err != nil {
 		glog.Exitf("Error in config setup, exiting: %v", err)
 	}
@@ -184,7 +186,7 @@ func main() {
 		glog.Exitf("Error in probe config, exiting: %v", err)
 	}
 
-	probeNames := getProbeNames(probes)
+	probeNames := conf.GetProbeNames(probes)
 	mExp, err := setupMetricExporter(*expositionType)
 	if err != nil {
 		glog.Exitf("Error : %v", err)
@@ -192,7 +194,7 @@ func main() {
 
 	var fh *os.File
 	if *webLogDir != "" {
-		fh, err = setupWebLog(*webLogDir, time.Now())
+		fh, err = log.SetupWebLog(*webLogDir, time.Now())
 		if err != nil {
 			glog.Exitf("Failed to set up logging", err)
 		}

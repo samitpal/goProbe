@@ -101,18 +101,6 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *m
 	}
 }
 
-func sendStopSignal(probes []modules.Prober, mExp metric_export.MetricExporter, ps *misc.ProbesStatus, stopCh chan bool) {
-	glog.Info("Inside sendStopSignal. Will sleep for 3 mins")
-	time.Sleep(3 * time.Minute)
-	glog.Info("Closing stopCh channel thereby signaling stop.")
-	close(stopCh)
-	glog.Info("Restarting in 2 mins.....")
-	time.Sleep(2 * time.Minute)
-	glog.Info("Restarting.....")
-	newStopCh := make(chan bool)
-	go runProbes(probes, mExp, ps, newStopCh)
-}
-
 func main() {
 
 	flag.Parse()

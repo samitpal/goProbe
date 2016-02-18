@@ -5,6 +5,7 @@ import (
 	"flag"
 	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
+	leader_election "github.com/samitpal/consul-client-master-election/election_api"
 	"github.com/samitpal/goProbe/conf"
 	"github.com/samitpal/goProbe/log"
 	"github.com/samitpal/goProbe/metric_export"
@@ -26,6 +27,7 @@ var (
 	dryRun            = flag.Bool("dry_run", false, "Dry run mode where it does everything except running the probes.")
 	metricsPath       = flag.String("metric_path", "/metrics", "Metric exposition path.")
 	webLogDir         = flag.String("weblog_dir", "", "Directory path of the web log.")
+	HAMode            = flag.Bool("ha_mode", false, "Whether to use consul for High Availabity mode.")
 )
 
 func setupMetricExporter(s string) (metric_export.MetricExporter, error) {
@@ -42,7 +44,7 @@ func setupMetricExporter(s string) (metric_export.MetricExporter, error) {
 }
 
 // runProbes actually runs the probes. This is the core.
-func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *misc.ProbesStatus) {
+func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *misc.ProbesStatus, stopCh chan bool) {
 	for _, p := range probes {
 		// Add some randomness to space out the probes a bit at start up.
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -50,7 +52,8 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *m
 		go func(p modules.Prober) {
 			for {
 				// Buffered channel so that the read happens even if there is nothing to receive it. Needed to
-				// handle the timeout scenario.
+				// handle the timeout scenario as well as the situaion when the go routine has to return on stop
+				// signal.
 				respCh := make(chan *modules.ProbeData, 1)
 				errCh := make(chan error, 1)
 
@@ -88,11 +91,26 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *m
 					mExp.IncProbeTimeoutCount(pn, startTimeSecs)
 					mExp.SetFieldValuesUnexpected(pn, startTimeSecs)
 					ps.WriteProbeTimeoutStatus(pn, startTime, time.Now().UnixNano())
+				case <-stopCh:
+					glog.Info("Goroutine recieved stop signal. Returning.")
+					return
 				}
 				<-timer.C
 			}
 		}(p)
 	}
+}
+
+func sendStopSignal(probes []modules.Prober, mExp metric_export.MetricExporter, ps *misc.ProbesStatus, stopCh chan bool) {
+	glog.Info("Inside sendStopSignal. Will sleep for 3 mins")
+	time.Sleep(3 * time.Minute)
+	glog.Info("Closing stopCh channel thereby signaling stop.")
+	close(stopCh)
+	glog.Info("Restarting in 2 mins.....")
+	time.Sleep(2 * time.Minute)
+	glog.Info("Restarting.....")
+	newStopCh := make(chan bool)
+	go runProbes(probes, mExp, ps, newStopCh)
 }
 
 func main() {
@@ -139,7 +157,19 @@ func main() {
 
 	if !*dryRun {
 		// Start probing.
-		go runProbes(probes, mExp, ps)
+		stopCh := make(chan bool)
+		if *HAMode {
+			glog.Info("Running in HA mode..")
+			client, err := getConsulClient()
+			if err != nil {
+				glog.Fatalf("Fatal error: %v", err)
+			}
+			job := NewDoJob(probes, mExp, ps)
+			go leader_election.MaybeAcquireLeadership(client, "goProbe/leader", 20, 30, "goProbe", false, job)
+		} else {
+			go runProbes(probes, mExp, ps, stopCh)
+		}
+		//go sendStopSignal(probes, mExp, ps, stopCh)
 		if err = http.ListenAndServe(*listenAddress, nil); err != nil {
 			panic(err)
 		}

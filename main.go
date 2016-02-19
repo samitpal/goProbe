@@ -92,7 +92,7 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *m
 					mExp.SetFieldValuesUnexpected(pn, startTimeSecs)
 					ps.WriteProbeTimeoutStatus(pn, startTime, time.Now().UnixNano())
 				case <-stopCh:
-					glog.Info("Goroutine recieved stop signal. Returning.")
+					glog.Infof("Goroutine probe named: %s recieved stop signal. Returning.", pn)
 					return
 				}
 				<-timer.C

@@ -27,7 +27,7 @@ var (
 	dryRun            = flag.Bool("dry_run", false, "Dry run mode where it does everything except running the probes.")
 	metricsPath       = flag.String("metric_path", "/metrics", "Metric exposition path.")
 	webLogDir         = flag.String("weblog_dir", "", "Directory path of the web log.")
-	HAMode            = flag.Bool("ha_mode", false, "Whether to use consul for High Availabity mode.")
+	haMode            = flag.Bool("ha_mode", false, "Whether to use consul for High Availabity mode.")
 )
 
 func setupMetricExporter(s string) (metric_export.MetricExporter, error) {
@@ -146,7 +146,7 @@ func main() {
 	if !*dryRun {
 		// Start probing.
 		stopCh := make(chan bool)
-		if *HAMode {
+		if *haMode {
 			glog.Info("Running in HA mode..")
 			client, err := getConsulClient()
 			if err != nil {
@@ -157,7 +157,6 @@ func main() {
 		} else {
 			go runProbes(probes, mExp, ps, stopCh)
 		}
-		//go sendStopSignal(probes, mExp, ps, stopCh)
 		if err = http.ListenAndServe(*listenAddress, nil); err != nil {
 			panic(err)
 		}

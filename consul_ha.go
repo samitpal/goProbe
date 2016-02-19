@@ -37,6 +37,6 @@ func NewDoJob(probes []modules.Prober, mExp metric_export.MetricExporter, ps *mi
 }
 
 func (j DoJob) DoJobFunc(stopCh chan bool, doneCh chan bool) {
-	// we do not use doneCh since this is a continuously function
+	// we do not use doneCh since this is a continuously method.
 	runProbes(j.probes, j.mExp, j.ps, stopCh)
 }

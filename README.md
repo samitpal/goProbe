@@ -4,7 +4,7 @@
 
 Summary
 ------------------
-goProbe is a probe service written in Go programming language. It has three parts to it, a core, probe modules and a metric exposition component. 
+goProbe is a probe service written in Go programming language. It has four parts to it, a core, probe modules, metric exposition, and the newly added metric push component. 
 
 It currently supports probe metric exposition in json (default) as well as [prometheus](http://prometheus.io) compatible format. 
 

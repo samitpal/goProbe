@@ -2,7 +2,7 @@ package metric_export
 
 import (
 	"encoding/json"
-	"github.com/marpaia/graphite-golang"
+	grpt "github.com/marpaia/graphite-golang"
 	"github.com/samitpal/goProbe/modules"
 	"net/http"
 	"strconv"
@@ -187,39 +187,45 @@ func (pm *jsonExport) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func (pm *jsonExport) RetGraphiteMetrics(pn string) []graphite.Metric {
-	var metric []graphite.Metric
+func (pm *jsonExport) RetGraphiteMetrics(pn string) []grpt.Metric {
+	var metric []grpt.Metric
 
 	pm.ProbeCount.RLock()
-	metric = append(metric, graphite.Metric{pn + ".count", strconv.FormatFloat(pm.ProbeCount.Count[pn].Value, 'g', -1, 64), pm.ProbeCount.Count[pn].Time})
+	pc_metric := grpt.Metric{Name: pn + ".count", Value: strconv.FormatFloat(pm.ProbeCount.Count[pn].Value, 'g', -1, 64), Timestamp: pm.ProbeCount.Count[pn].Time}
+	metric = append(metric, pc_metric)
 	pm.ProbeCount.RUnlock()
 
 	pm.ProbeErrorCount.RLock()
 	_, ok := pm.ProbeErrorCount.ErrorCount[pn]
 	if ok {
-		metric = append(metric, graphite.Metric{pn + ".error_count", strconv.FormatFloat(pm.ProbeErrorCount.ErrorCount[pn].Value, 'g', -1, 64), pm.ProbeErrorCount.ErrorCount[pn].Time})
+		pe_metric := grpt.Metric{Name: pn + ".error_count", Value: strconv.FormatFloat(pm.ProbeErrorCount.ErrorCount[pn].Value, 'g', -1, 64), Timestamp: pm.ProbeErrorCount.ErrorCount[pn].Time}
+		metric = append(metric, pe_metric)
 	}
 	pm.ProbeErrorCount.RUnlock()
 
 	pm.ProbeTimeoutCount.RLock()
 	_, ok = pm.ProbeTimeoutCount.TimeoutCount[pn]
 	if ok {
-		metric = append(metric, graphite.Metric{pn + ".timeout_count", strconv.FormatFloat(pm.ProbeTimeoutCount.TimeoutCount[pn].Value, 'g', -1, 64), pm.ProbeTimeoutCount.TimeoutCount[pn].Time})
+		pt_metric := grpt.Metric{Name: pn + ".timeout_count", Value: strconv.FormatFloat(pm.ProbeTimeoutCount.TimeoutCount[pn].Value, 'g', -1, 64), Timestamp: pm.ProbeTimeoutCount.TimeoutCount[pn].Time}
+		metric = append(metric, pt_metric)
 	}
 	pm.ProbeTimeoutCount.RUnlock()
 
 	pm.ProbeIsUp.RLock()
-	metric = append(metric, graphite.Metric{pn + ".up", strconv.FormatFloat(pm.ProbeIsUp.Up[pn].Value, 'g', -1, 64), pm.ProbeIsUp.Up[pn].Time})
+	pu_metric := grpt.Metric{Name: pn + ".up", Value: strconv.FormatFloat(pm.ProbeIsUp.Up[pn].Value, 'g', -1, 64), Timestamp: pm.ProbeIsUp.Up[pn].Time}
+	metric = append(metric, pu_metric)
 	pm.ProbeIsUp.RUnlock()
 
 	pm.ProbeLatency.RLock()
-	metric = append(metric, graphite.Metric{pn + ".latency", strconv.FormatFloat(pm.ProbeLatency.Latency[pn].Value, 'g', -1, 64), pm.ProbeLatency.Latency[pn].Time})
+	pl_metric := grpt.Metric{Name: pn + ".latency", Value: strconv.FormatFloat(pm.ProbeLatency.Latency[pn].Value, 'g', -1, 64), Timestamp: pm.ProbeLatency.Latency[pn].Time}
+	metric = append(metric, pl_metric)
 	pm.ProbeLatency.RUnlock()
 
 	pm.ProbePayloadSize.RLock()
 	_, ok = pm.ProbePayloadSize.Payload[pn]
 	if ok {
-		metric = append(metric, graphite.Metric{pn + ".payload_size", strconv.FormatFloat(pm.ProbePayloadSize.Payload[pn].Value, 'g', -1, 64), pm.ProbePayloadSize.Payload[pn].Time})
+		ps_metric := grpt.Metric{Name: pn + ".payload_size", Value: strconv.FormatFloat(pm.ProbePayloadSize.Payload[pn].Value, 'g', -1, 64), Timestamp: pm.ProbePayloadSize.Payload[pn].Time}
+		metric = append(metric, ps_metric)
 	}
 	pm.ProbePayloadSize.RUnlock()
 

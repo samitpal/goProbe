@@ -83,18 +83,18 @@ goProbe now has native support to push metrics. Currently it just supports pushi
 
 $GOPROBE_PUSH_TO=graphite
 
-$GOPROBE_GRAPHITE_HOST : graphite host name/ip
+$GOPROBE_GRAPHITE_HOST : set this to your graphite host name/ip
 
-$GOPROB_GRAPHITE_PORT  : graphite host port number.
+$GOPROB_GRAPHITE_PORT  : set this to your graphite host port number.
 
 HA Mode
 -------------------
 
 goProbe now supports high availability mode. You can run multpiple copies of this program in separate set of machines and be assured that one of those would acquire leadership and do the actual probing. In case the leader host goes down or faces a network parition, one of the followers should aquire mastership and continue with the work.This mode needs a consul (consul.io) install. It uses https://github.com/samitpal/consul-client-master-election library for master election. You need to set the following environment vars in this mode and use the ha_mode flag.
 
-$GOPROBE_CONSUL_HOST : consul host name or ip
+$GOPROBE_CONSUL_HOST : set this to your consul host name or ip
 
-$GOPROBE_CONSUL_PORT:  consul port 
+$GOPROBE_CONSUL_PORT:  set  this to to your consul port 
 
 
 Http probe json configs

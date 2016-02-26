@@ -2,6 +2,7 @@ package metric_export
 
 import (
 	"flag"
+	"github.com/marpaia/graphite-golang"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/samitpal/goProbe/modules"
 	"net/http"
@@ -107,4 +108,9 @@ func (p *prometheusExport) SetFieldValuesUnexpected(probeName string, t int64) {
 //MetricHttpHandler registers a http handler to expose the metrics
 func (p prometheusExport) MetricHttpHandler() http.Handler {
 	return prometheus.Handler()
+}
+
+// This is not used, but needs to be defined to satisfy the interface.
+func (p prometheusExport) RetGraphiteMetrics(pn string) []graphite.Metric {
+	return []graphite.Metric{}
 }

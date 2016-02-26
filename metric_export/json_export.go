@@ -2,8 +2,10 @@ package metric_export
 
 import (
 	"encoding/json"
+	"github.com/marpaia/graphite-golang"
 	"github.com/samitpal/goProbe/modules"
 	"net/http"
+	"strconv"
 	"sync"
 )
 
@@ -46,7 +48,7 @@ type jsonExport struct {
 	ProbeCount
 	ProbeErrorCount   // error count indicates error in probe module.
 	ProbeTimeoutCount // timeout count increases when a probe times out.
-	ProbeIsUp         // value of 1 is success, 0 is failure. -value of -1 could be because of probe module failure/timeout.
+	ProbeIsUp         // value of 1 is a success, 0 is failure. value of -1 could be because of probe module failure/timeout.
 	ProbeLatency      // latency in milli seconds.
 	ProbePayloadSize  // size of the response payload.
 }
@@ -183,4 +185,43 @@ func (pm *jsonExport) MarshalJSON() ([]byte, error) {
 	pm.ProbePayloadSize.RUnlock()
 
 	return json.Marshal(m)
+}
+
+func (pm *jsonExport) RetGraphiteMetrics(pn string) []graphite.Metric {
+	var metric []graphite.Metric
+
+	pm.ProbeCount.RLock()
+	metric = append(metric, graphite.Metric{pn + ".count", strconv.FormatFloat(pm.ProbeCount.Count[pn].Value, 'g', -1, 64), pm.ProbeCount.Count[pn].Time})
+	pm.ProbeCount.RUnlock()
+
+	pm.ProbeErrorCount.RLock()
+	_, ok := pm.ProbeErrorCount.ErrorCount[pn]
+	if ok {
+		metric = append(metric, graphite.Metric{pn + ".error_count", strconv.FormatFloat(pm.ProbeErrorCount.ErrorCount[pn].Value, 'g', -1, 64), pm.ProbeErrorCount.ErrorCount[pn].Time})
+	}
+	pm.ProbeErrorCount.RUnlock()
+
+	pm.ProbeTimeoutCount.RLock()
+	_, ok = pm.ProbeTimeoutCount.TimeoutCount[pn]
+	if ok {
+		metric = append(metric, graphite.Metric{pn + ".timeout_count", strconv.FormatFloat(pm.ProbeTimeoutCount.TimeoutCount[pn].Value, 'g', -1, 64), pm.ProbeTimeoutCount.TimeoutCount[pn].Time})
+	}
+	pm.ProbeTimeoutCount.RUnlock()
+
+	pm.ProbeIsUp.RLock()
+	metric = append(metric, graphite.Metric{pn + ".up", strconv.FormatFloat(pm.ProbeIsUp.Up[pn].Value, 'g', -1, 64), pm.ProbeIsUp.Up[pn].Time})
+	pm.ProbeIsUp.RUnlock()
+
+	pm.ProbeLatency.RLock()
+	metric = append(metric, graphite.Metric{pn + ".latency", strconv.FormatFloat(pm.ProbeLatency.Latency[pn].Value, 'g', -1, 64), pm.ProbeLatency.Latency[pn].Time})
+	pm.ProbeLatency.RUnlock()
+
+	pm.ProbePayloadSize.RLock()
+	_, ok = pm.ProbePayloadSize.Payload[pn]
+	if ok {
+		metric = append(metric, graphite.Metric{pn + ".payload_size", strconv.FormatFloat(pm.ProbePayloadSize.Payload[pn].Value, 'g', -1, 64), pm.ProbePayloadSize.Payload[pn].Time})
+	}
+	pm.ProbePayloadSize.RUnlock()
+
+	return metric
 }

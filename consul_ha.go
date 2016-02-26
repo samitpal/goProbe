@@ -5,6 +5,7 @@ import (
 	"github.com/samitpal/goProbe/metric_export"
 	"github.com/samitpal/goProbe/misc"
 	"github.com/samitpal/goProbe/modules"
+	"github.com/samitpal/goProbe/push_metric"
 	"os"
 )
 
@@ -27,16 +28,17 @@ func getConsulClient() (*api.Client, error) {
 }
 
 type DoJob struct {
+	psr    push_metric.Pusher
 	probes []modules.Prober
 	mExp   metric_export.MetricExporter
 	ps     *misc.ProbesStatus
 }
 
-func NewDoJob(probes []modules.Prober, mExp metric_export.MetricExporter, ps *misc.ProbesStatus) *DoJob {
-	return &DoJob{probes, mExp, ps}
+func NewDoJob(psr push_metric.Pusher, probes []modules.Prober, mExp metric_export.MetricExporter, ps *misc.ProbesStatus) *DoJob {
+	return &DoJob{psr, probes, mExp, ps}
 }
 
 func (j DoJob) DoJobFunc(stopCh chan bool, doneCh chan bool) {
 	// we do not use doneCh since this is a continuously method.
-	runProbes(j.probes, j.mExp, j.ps, stopCh)
+	runProbes(j.psr, j.probes, j.mExp, j.ps, stopCh)
 }

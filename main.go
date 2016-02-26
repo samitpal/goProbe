@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
@@ -11,6 +10,7 @@ import (
 	"github.com/samitpal/goProbe/metric_export"
 	"github.com/samitpal/goProbe/misc"
 	"github.com/samitpal/goProbe/modules"
+	"github.com/samitpal/goProbe/push_metric"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -28,27 +28,24 @@ var (
 	metricsPath       = flag.String("metric_path", "/metrics", "Metric exposition path.")
 	webLogDir         = flag.String("weblog_dir", "", "Directory path of the web log.")
 	haMode            = flag.Bool("ha_mode", false, "Whether to use consul for High Availabity mode.")
+	pushMetric        = flag.Bool("push_metric", false, "Whether to push metric to a given provier. If set, one needs to set the GOPROBE_PUSH_TO env variable")
 )
 
-func setupMetricExporter(s string) (metric_export.MetricExporter, error) {
-	var mExp metric_export.MetricExporter
-	if s == "prometheus" {
-		mExp = metric_export.NewPrometheusExport()
-	} else if s == "json" {
-		mExp = metric_export.NewJSONExport()
-	} else {
-		return nil, errors.New("Unknown metric exporter, %s.")
+func checkFlags() {
+	if *pushMetric && (*expositionType == "prometheus") {
+		glog.Exitln("Exposition type: prometheus is not compatible with push_metric flag")
 	}
-	mExp.Prepare()
-	return mExp, nil
 }
 
 // runProbes actually runs the probes. This is the core.
-func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *misc.ProbesStatus, stopCh chan bool) {
+func runProbes(pusher push_metric.Pusher, probes []modules.Prober, mExp metric_export.MetricExporter, ps *misc.ProbesStatus, stopCh chan bool) {
 	for _, p := range probes {
 		// Add some randomness to space out the probes a bit at start up.
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		time.Sleep(time.Duration(r.Intn(*probeSpaceOutTime)) * time.Second)
+		if *pushMetric {
+			pusher.Setup()
+		}
 		go func(p modules.Prober) {
 			for {
 				// Buffered channel so that the read happens even if there is nothing to receive it. Needed to
@@ -95,6 +92,9 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *m
 					glog.Infof("Goroutine probe named: %s recieved stop signal. Returning.", pn)
 					return
 				}
+				if *pushMetric {
+					go pusher.PushMetric(mExp, pn)
+				}
 				<-timer.C
 			}
 		}(p)
@@ -104,13 +104,22 @@ func runProbes(probes []modules.Prober, mExp metric_export.MetricExporter, ps *m
 func main() {
 
 	flag.Parse()
+	checkFlags()
+	var pusher push_metric.Pusher
+	var err error
+	if *pushMetric {
+		pusher, err = push_metric.SetupProviders()
+		if err != nil {
+			glog.Exitf("Problem while setting up push provider: %v", err)
+		}
+	}
 	config, err := ioutil.ReadFile(*configFlag)
 	if err != nil {
-		glog.Exitf("Error reading config file: %v", err)
+		glog.Exitf("Error reading probe config file: %v", err)
 	}
 	probes, err := conf.SetupConfig(config)
 	if err != nil {
-		glog.Exitf("Error in config setup, exiting: %v", err)
+		glog.Exitf("Error in probe config setup, exiting: %v", err)
 	}
 	err = misc.CheckProbeConfig(probes)
 	if err != nil {
@@ -118,7 +127,7 @@ func main() {
 	}
 
 	probeNames := conf.GetProbeNames(probes)
-	mExp, err := setupMetricExporter(*expositionType)
+	mExp, err := metric_export.SetupMetricExporter(*expositionType)
 	if err != nil {
 		glog.Exitf("Error : %v", err)
 	}
@@ -152,10 +161,10 @@ func main() {
 			if err != nil {
 				glog.Fatalf("Fatal error: %v", err)
 			}
-			job := NewDoJob(probes, mExp, ps)
+			job := NewDoJob(pusher, probes, mExp, ps)
 			go leader_election.MaybeAcquireLeadership(client, "goProbe/leader", 20, 30, "goProbe", false, job)
 		} else {
-			go runProbes(probes, mExp, ps, stopCh)
+			go runProbes(pusher, probes, mExp, ps, stopCh)
 		}
 		if err = http.ListenAndServe(*listenAddress, nil); err != nil {
 			panic(err)

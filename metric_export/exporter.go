@@ -1,6 +1,8 @@
 package metric_export
 
 import (
+	"errors"
+	"github.com/marpaia/graphite-golang"
 	"github.com/samitpal/goProbe/modules"
 	"net/http"
 )
@@ -28,6 +30,23 @@ type MetricExporter interface {
 	// It takes the probe name and epoch time (seconds) as args.
 	SetFieldValuesUnexpected(string, int64)
 
-	//MetricHttpHandler returns the http handler to expose the metrics via a given path (e.g /metrics).
+	// MetricHttpHandler returns the http handler to expose the metrics via a given path (e.g /metrics).
 	MetricHttpHandler() http.Handler
+
+	// RetGraphiteMetrics is only implemented by the json exporter. This will be used for pushing metrics
+	// It returns the metrics for a given probe in graphite metric format
+	RetGraphiteMetrics(string) []graphite.Metric
+}
+
+func SetupMetricExporter(s string) (MetricExporter, error) {
+	var mExp MetricExporter
+	if s == "prometheus" {
+		mExp = NewPrometheusExport()
+	} else if s == "json" {
+		mExp = NewJSONExport()
+	} else {
+		return nil, errors.New("Unknown metric exporter, %s.")
+	}
+	mExp.Prepare()
+	return mExp, nil
 }

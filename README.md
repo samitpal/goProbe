@@ -68,19 +68,34 @@ $ export GOPROBE_TMPL="templates/*"
 
 $ $GOPATH/bin/goProbe -config <*path to config file*>
 
-goProbe now supports high availability mode. You can run multpiple copies of this program in separate set of machines and be assured that one of those would acquire leadership and do the actual probing. In case the leader host goes down or faces a network parition, one of the followers should aquire mastership and continue with the work.This mode needs a consul (consul.io) install. It uses https://github.com/samitpal/consul-client-master-election library for master election. You need to set the following environment vars in this mode and use the ha_mode flag.
-
-$GOPROBE_CONSUL_HOST : consul host name or ip
-
-$GOPROBE_CONSUL_PORT:  consul port 
-
 By default goProbe displays the probe metrics via the **/metrics** http handler in json format. It also displays the current configs via its **/config** http handler. The /status handler displays the lastest probe status.
 
 To expose the metrics in prometheus format, run it as follows,
 
 $ $GOPATH/bin/goProbe -config <*path to config file*> -exposition_type prometheus
 
-The json format is time series friendly in that the metrics contain a time field. It just needs a simple script to parse the data from the /metrics end point and push that to a time series database like graphite, influxdb etc. Example push scripts are available at https://github.com/samitpal/goProbe-metric-push.
+The json format is time series friendly in that the metrics contain a time field. It just needs a simple script to parse the data from the /metrics end point and push that to a time series database like graphite, influxdb etc. Example push scripts are available at https://github.com/samitpal/goProbe-metric-push. See below for native push support
+
+Pushing Metrics
+-------------------
+
+goProbe now has native support to push metrics. Currently it just supports pushing to graphite. There are plans to support influxdb, kafka in the near future. You need to use the -push_metric flag. In addition to that you need to set the following env variables.
+
+$GOPROBE_PUSH_TO=graphite
+
+$GOPROBE_GRAPHITE_HOST : graphite host name/ip
+
+$GOPROB_GRAPHITE_PORT  : graphite host port number.
+
+HA Mode
+-------------------
+
+goProbe now supports high availability mode. You can run multpiple copies of this program in separate set of machines and be assured that one of those would acquire leadership and do the actual probing. In case the leader host goes down or faces a network parition, one of the followers should aquire mastership and continue with the work.This mode needs a consul (consul.io) install. It uses https://github.com/samitpal/consul-client-master-election library for master election. You need to set the following environment vars in this mode and use the ha_mode flag.
+
+$GOPROBE_CONSUL_HOST : consul host name or ip
+
+$GOPROBE_CONSUL_PORT:  consul port 
+
 
 Http probe json configs
 -------------------

@@ -16,12 +16,12 @@ type Pusher interface {
 func SetupProviders() (Pusher, error) {
 	if os.Getenv("GOPROBE_PUSH_TO") == "graphite" {
 		graphite_host := "localhost"
-		if os.Getenv("GORPOBE_GRAPHITE_HOST") != "" {
-			graphite_host = os.Getenv("GORPOBE_GRAPHITE_HOST")
+		if os.Getenv("GOPROBE_GRAPHITE_HOST") != "" {
+			graphite_host = os.Getenv("GOPROBE_GRAPHITE_HOST")
 		}
 		graphite_port := 2003
-		if os.Getenv("GORPOBE_GRAPHITE_PORT") != "" {
-			graphite_host = os.Getenv("GORPOBE_GRAPHITE_PORT")
+		if os.Getenv("GOPROBE_GRAPHITE_PORT") != "" {
+			graphite_host = os.Getenv("GOPROBE_GRAPHITE_PORT")
 		}
 		return provider.NewGraphitePusher(graphite_host, graphite_port)
 	}

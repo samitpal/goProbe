@@ -85,7 +85,7 @@ $GOPROBE_PUSH_TO=graphite
 
 $GOPROBE_GRAPHITE_HOST : set this to your graphite host name/ip
 
-$GOPROB_GRAPHITE_PORT  : set this to your graphite host port number.
+$GOPROBE_GRAPHITE_PORT  : set this to your graphite host port number.
 
 HA Mode
 -------------------
